@@ -28,7 +28,7 @@
          </div>
       </div>
    </div>
-   @elseif((Auth::user()->email_verified_at ==2))
+   @elseif(Auth::user()->email_verified_at && (string)Auth::user()->email_verified_at == '2')
    <div class="mb-4">
       <div class="card">
          <div class="card-body">
@@ -280,34 +280,8 @@ priceInput.addEventListener('input', toggleSubmit);
 
    
 
-   <div class="row g-3 g-md-4 mb-4" id="posts-container">
-  
-    @forelse($posts as $post)
-<div class="col-4">
-   <div class="card shadow-sm border-0">
-      @if($post->image)
-         <img src="{{ asset('uploads/'.$post->image) }}" class="card-img-top" alt="Post Image">
-      @else
-         <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top" alt="No Image">
-      @endif
-      
-      <div class="card-body p-2">
-         <h5 class="card-title mb-0">{{ $post->title ? Str::limit($post->title, 20) : 'No Title' }}</h5>
-         <small class="price-tag text-success">{{ $post->price ? Str::limit($post->price, 20) : 'No price' }}</small>
-         <span class="badge bg-primary cart-badge">
-            <i class="bi bi-cart-plus"></i>
-         </span>                            
-      </div>
-   </div>
-</div>
-@empty
-<div class="col-12">
-   <div class="text-center py-5">
-      <p class="text-muted">No posts found.</p>
-   </div>
-</div>
-@endforelse
-</div>
+   @include('frontend.products-partial')
+
 
    
 </div>

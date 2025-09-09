@@ -62,6 +62,22 @@
    z-index: 10;
    text-transform: uppercase;
    }
+   
+   /* CSS for disabled badge */
+   .cart-badge.disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+   pointer-events: none;
+   }
+
+   .cart-badge:not(.disabled) {
+   cursor: pointer;
+   transition: opacity 0.3s ease;
+   }
+
+   .cart-badge:not(.disabled):hover {
+   opacity: 0.8;
+   }
 </style>
 
 <div class="mt-4">
@@ -156,7 +172,7 @@
             {{-- যদি কোন specific category select করা থাকে তাহলে same parent এর অধীনের সব categories --}}
             @php
                 $siblingCategories = \App\Models\Category::where('parent_cat_id', $category->parent_cat_id)
-                                                       ->whereIn('cat_type', ['product', 'service'])
+                                                       ->whereIn('cat_type', ['product', 'service', 'profile'])
                                                        ->get();
             @endphp
             
@@ -178,7 +194,7 @@
             @foreach($parentCategories as $parentCat)
                 @php
                     $subCategories = \App\Models\Category::where('parent_cat_id', $parentCat->id)
-                                                       ->whereIn('cat_type', ['product', 'service'])
+                                                       ->whereIn('cat_type', ['product', 'service', 'profile'])
                                                        ->get();
                 @endphp
                 

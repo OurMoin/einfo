@@ -3,8 +3,10 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\Comment;
 use App\Models\Category;
+
 class PostController extends Controller
 {
     /**
@@ -23,6 +25,7 @@ class PostController extends Controller
     }
     return view("frontend.index", compact('posts'));
 }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -64,33 +67,42 @@ class PostController extends Controller
         return back()->with('success', 'Post created successfully!');
     }
 
-
-    // PostController এ এই method add করুন
-public function showByCategory($slug, Request $request)
-{
-    // Slug দিয়ে category খুঁজুন
-    $category = \App\Models\Category::where('slug', $slug)->first();
-    
-    if (!$category) {
-        abort(404, 'Category not found');
+    // Updated method for category-based posts with profile support
+    public function showByCategory($slug, Request $request)
+    {
+        // Slug দিয়ে category খুঁজুন
+        $category = Category::where('slug', $slug)->first();
+        
+        if (!$category) {
+            abort(404, 'Category not found');
+        }
+        
+        // Check if there are users with this category_id (profile data)
+        $hasUsers = User::where('category_id', $category->id)->exists();
+        
+        if ($hasUsers) {
+            // Load users if they exist for this category
+            $posts = User::where('category_id', $category->id)
+                        ->with('category')
+                        ->paginate(12);
+        } else {
+            // Load regular posts for product/service categories  
+            $posts = Post::with(['user', 'category'])
+                         ->where('category_id', $category->id)
+                         ->latest()
+                         ->paginate(12);
+        }
+        
+        // AJAX request এর জন্য
+        if ($request->ajax()) {
+            return response()->json([
+                'posts' => view('frontend.products-partial', compact('posts'))->render(),
+                'hasMore' => $posts->hasMorePages()
+            ]);
+        }
+        
+        return view('frontend.products', compact('posts', 'category'));
     }
-    
-    // Category অনুযায়ী posts নিন
-    $posts = Post::with(['user', 'category'])
-                 ->where('category_id', $category->id)
-                 ->latest()
-                 ->paginate(12);
-    
-    // AJAX request এর জন্য
-    if ($request->ajax()) {
-        return response()->json([
-            'posts' => view('frontend.products-partial', compact('posts'))->render(),
-            'hasMore' => $posts->hasMorePages()
-        ]);
-    }
-    
-    return view('frontend.products', compact('posts', 'category'));
-}
    
     /**
      * Display the specified resource.
