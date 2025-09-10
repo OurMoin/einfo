@@ -179,14 +179,99 @@
     @enderror
 </div>
 
-                <!-- Job Title -->
-                <div class="mb-3">
-                    <label for="job_title" class="form-label">Job Title or Business Category</label>
-                    <input type="text" name="job_title" id="job_title" class="form-control @error('job_title') is-invalid @enderror" value="{{ old('job_title', auth()->user()->job_title) }}" placeholder="e.g. Software Engineer, Restaurant Owner, etc.">
-                    @error('job_title')
-                        <div class="text-danger mt-1">{{ $message }}</div>
-                    @enderror
-                </div>
+               <!-- Job Title or Business Category with Suggestions -->
+<div class="mb-3">
+    <label for="job_title" class="form-label">Job Title or Business Category</label>
+    <div style="position: relative;">
+        <input type="text" 
+               name="job_title" 
+               id="job_title" 
+               class="form-control @error('job_title') is-invalid @enderror" 
+               value="{{ old('job_title', auth()->user()->job_title ?? (auth()->user()->category ? auth()->user()->category->category_name : '')) }}" 
+               placeholder="e.g. Software Engineer, Restaurant Owner, etc."
+               autocomplete="off">
+        <input type="hidden" id="category_id" name="category_id" value="{{ old('category_id', auth()->user()->category_id) }}">
+        <div id="job_suggestions" 
+             style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; z-index: 1000; display: none;">
+        </div>
+    </div>
+    @error('job_title')
+        <div class="text-danger mt-1">{{ $message }}</div>
+    @enderror
+</div>
+
+<script>
+// Job title categories data from backend (only profile type categories)
+const jobCategories = @json($categories ?? []);
+const jobTitleInput = document.getElementById('job_title');
+const categoryIdInput = document.getElementById('category_id');
+const jobSuggestionsDiv = document.getElementById('job_suggestions');
+let filteredJobCategories = [];
+
+function showJobSuggestions(searchTerm) {
+    if (searchTerm.length === 0) {
+        jobSuggestionsDiv.style.display = 'none';
+        return;
+    }
+
+    filteredJobCategories = jobCategories.filter(category =>
+        category.category_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (filteredJobCategories.length === 0) {
+        jobSuggestionsDiv.innerHTML = '<div style="padding: 10px 15px; color: #6c757d;">No matching categories found. You can enter your custom job title!</div>';
+        jobSuggestionsDiv.style.display = 'block';
+        return;
+    }
+
+    const suggestionsHtml = filteredJobCategories.map(category => `
+        <div style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0;"
+             onclick="selectJobCategory(${category.id}, '${category.category_name}')"
+             onmouseover="this.style.backgroundColor='#f8f9fa'"
+             onmouseout="this.style.backgroundColor='white'">
+            ${category.category_name}
+        </div>
+    `).join('');
+
+    jobSuggestionsDiv.innerHTML = suggestionsHtml;
+    jobSuggestionsDiv.style.display = 'block';
+}
+
+function selectJobCategory(id, name) {
+    jobTitleInput.value = name;
+    categoryIdInput.value = id;
+    jobSuggestionsDiv.style.display = 'none';
+}
+
+jobTitleInput.addEventListener('input', function() {
+    const searchValue = this.value.trim();
+    
+    if (searchValue.length > 0) {
+        showJobSuggestions(searchValue);
+        
+        // Check if typed value exactly matches any existing category
+        const exactMatch = jobCategories.find(category => 
+            category.category_name.toLowerCase() === searchValue.toLowerCase()
+        );
+        
+        if (exactMatch) {
+            categoryIdInput.value = exactMatch.id; // Set existing category ID
+        } else {
+            categoryIdInput.value = ''; // Clear category_id for custom job title
+        }
+    } else {
+        jobSuggestionsDiv.style.display = 'none';
+        categoryIdInput.value = '';
+    }
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#job_title') && !e.target.closest('#job_suggestions')) {
+        jobSuggestionsDiv.style.display = 'none';
+    }
+});
+</script>
 
                 <!-- Email -->
                 <div class="mb-3">

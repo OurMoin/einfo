@@ -106,7 +106,7 @@ function showSuggestions(searchTerm) {
     );
 
     if (filteredCategories.length === 0) {
-        suggestionsDiv.innerHTML = '<div style="padding: 10px 15px; color: #6c757d;">No categories found</div>';
+        suggestionsDiv.innerHTML = '<div style="padding: 10px 15px; color: #6c757d;">No matching categories found. You can create a new one!</div>';
         suggestionsDiv.style.display = 'block';
         return;
     }
@@ -132,8 +132,26 @@ function selectCategory(id, name) {
 }
 
 categoryInput.addEventListener('input', function() {
-    showSuggestions(this.value);
-    categoryIdInput.value = '';
+    const searchValue = this.value.trim();
+    
+    if (searchValue.length > 0) {
+        showSuggestions(searchValue);
+        
+        // Check if typed value exactly matches any existing category
+        const exactMatch = categories.find(category => 
+            category.category_name.toLowerCase() === searchValue.toLowerCase()
+        );
+        
+        if (exactMatch) {
+            categoryIdInput.value = exactMatch.id; // Set existing category ID
+        } else {
+            categoryIdInput.value = ''; // Clear category_id for new category
+        }
+    } else {
+        suggestionsDiv.style.display = 'none';
+        categoryIdInput.value = '';
+    }
+    
     toggleSubmit();
 });
 
@@ -148,14 +166,19 @@ function toggleSubmit() {
     const titleInput = document.getElementById('title');
     const priceInput = document.getElementById('price');
     
+    // Allow submission if all required fields are filled, regardless of category_id
     const hasRequiredFields = titleInput.value.trim() !== '' && 
                              priceInput.value.trim() !== '' && 
-                             categoryIdInput.value !== '';
+                             categoryInput.value.trim() !== ''; // Changed from categoryIdInput to categoryInput
     
+    const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = !hasRequiredFields;
 }
 
-// Event listeners add করুন
+// Event listeners
+const titleInput = document.getElementById('title');
+const priceInput = document.getElementById('price');
+
 titleInput.addEventListener('input', toggleSubmit);
 priceInput.addEventListener('input', toggleSubmit);
 </script>

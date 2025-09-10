@@ -12,10 +12,11 @@ class Post extends Model
     'title',
     'price', 
     'highest_price',
-    'image', 
+    'image',
     'description',
     'user_id',
-    'category_id'
+    'category_id',
+    'new_category', // এই লাইনটি add করুন
 ];
 
 // Post.php এ relationship add করুন

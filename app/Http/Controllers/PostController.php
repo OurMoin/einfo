@@ -40,13 +40,35 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $user_id = Auth::id(); // লগইন করা ইউজারের ID
-        // Validation: image বা description যেকোনো একটাই required
+        
+        // Validation
         $request->validate([
+            'category_name' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048|required_without:description',
             'description' => 'nullable|string|max:1000|required_without:image',
-            'category_id' => 'required|exists:categories,id',
         ]);
-       
+
+        $categoryId = null;
+        $newCategory = null;
+
+        // Check if category_id is provided (existing category selected)
+        if ($request->filled('category_id') && $request->category_id != '') {
+            // Validate that the category exists
+            $categoryExists = Category::where('id', $request->category_id)->exists();
+            if ($categoryExists) {
+                $categoryId = $request->category_id;
+            } else {
+                // If category_id doesn't exist, treat as new category
+                $newCategory = $request->category_name;
+            }
+        } else {
+            // User typed a new category name
+            $newCategory = $request->category_name;
+        }
+
+        // Handle image upload
         $imageName = null;
         if($request->hasFile('image')){
             $imageName = time() . '.' . $request->image->extension();
@@ -55,14 +77,15 @@ class PostController extends Controller
        
         // DB-এ সেভ করা
         Post::create([
-    'title' => $request->title,
-    'price' => $request->price,
-    'highest_price' => $request->discount,
-    'image' => $imageName,
-    'description' => $request->description,
-    'user_id' => $user_id,
-    'category_id' => $request->category_id
-]);
+            'title' => $request->title,
+            'price' => $request->price,
+            'highest_price' => $request->discount ?? null,
+            'image' => $imageName,
+            'description' => $request->description,
+            'user_id' => $user_id,
+            'category_id' => $categoryId, // Will be null if new category
+            'new_category' => $newCategory, // Will be null if existing category
+        ]);
        
         return back()->with('success', 'Post created successfully!');
     }

@@ -1,6 +1,5 @@
 <?php
 namespace App\Http\Controllers;
-
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use App\Models\Country;
 use App\Models\City;
+use App\Models\Category;
 
 class ProfileController extends Controller
 {
@@ -26,23 +26,61 @@ class ProfileController extends Controller
         if ($request->user()->country_id) {
             $cities = City::where('country_id', $request->user()->country_id)->get();
         }
+
+        // Get only profile type categories for job title suggestions
+        $categories = Category::where('cat_type', 'profile')->get();
        
         return view('profile.edit', [
             'user' => $request->user(),
             'countries' => $countries,
             'cities' => $cities,
+            'categories' => $categories,
         ]);
     }
 
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
-       
-        // Validate and get the data
-        $validated = $request->validated();
+        
+        // Custom validation since we're handling categories
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
+            'job_title' => ['nullable', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'country_id' => ['required', 'exists:countries,id'],
+            'city_id' => ['required', 'exists:cities,id'],
+            'area' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+        ]);
+
+        // Handle job title and category
+        $categoryId = null;
+        $jobTitle = null;
+
+        // Check if category_id is provided (existing category selected)
+        if ($request->filled('category_id') && $request->category_id != '') {
+            // Validate that the category exists and is profile type
+            $categoryExists = Category::where('id', $request->category_id)
+                                    ->where('cat_type', 'profile')
+                                    ->exists();
+            if ($categoryExists) {
+                $categoryId = $request->category_id;
+                // If category is selected, clear job_title
+                $jobTitle = null;
+            } else {
+                // If category_id doesn't exist, treat as custom job title
+                $jobTitle = $request->job_title;
+                $categoryId = null;
+            }
+        } else {
+            // User typed a custom job title
+            $jobTitle = $request->job_title;
+            $categoryId = null;
+        }
        
         // Handle image upload - FIXED to match registration format
         if ($request->hasFile('image')) {
@@ -69,22 +107,26 @@ class ProfileController extends Controller
         // Check if email is being changed and send OTP
         if (isset($validated['email']) && $validated['email'] !== $user->email) {
             $newEmail = $validated['email'];
-            
+           
             // Generate OTP
             $otp = rand(100000, 999999);
-            
+           
             // Add OTP to the data that will be saved
             $validated['otp'] = $otp;
-            
+           
             // Send OTP to new email
             Mail::raw("Your OTP code for email verification is: $otp", function($message) use ($newEmail) {
                 $message->to($newEmail)
                         ->subject('Email Update Verification - Wihima');
             });
-            
+           
             // Reset email verification since email changed
             $validated['email_verified_at'] = null;
         }
+
+        // Add category data to validated array
+        $validated['category_id'] = $categoryId;
+        $validated['job_title'] = $jobTitle;
        
         // Update user data
         $user->fill($validated);
@@ -101,9 +143,7 @@ class ProfileController extends Controller
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
-
         $user = $request->user();
-
         // Delete user's profile image if exists
         if ($user->image) {
             $oldImagePath = public_path('profile-image/' . $user->image);
@@ -111,13 +151,10 @@ class ProfileController extends Controller
                 unlink($oldImagePath);
             }
         }
-
         Auth::logout();
         $user->delete();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return Redirect::to('/');
     }
 }

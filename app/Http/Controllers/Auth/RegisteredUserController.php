@@ -5,6 +5,7 @@ use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Country;
+use App\Models\Category;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,9 @@ class RegisteredUserController extends Controller
     public function create(): View
     {
         $countries = Country::all();
-        return view('auth.register', compact('countries'));
+        // Get only profile type categories for job title suggestions
+        $categories = Category::where('cat_type', 'profile')->get();
+        return view('auth.register', compact('countries', 'categories'));
     }
 
     /**
@@ -51,18 +54,40 @@ class RegisteredUserController extends Controller
             $imageName = time().'.'.$request->image->extension();  
             $request->image->move(public_path('profile-image'), $imageName);
         }
+
+        // Handle job title and category
+        $categoryId = null;
+        $jobTitle = null;
+
+        // Check if category_id is provided (existing category selected)
+        if ($request->filled('category_id') && $request->category_id != '') {
+            // Validate that the category exists and is profile type
+            $categoryExists = Category::where('id', $request->category_id)
+                                    ->where('cat_type', 'profile')
+                                    ->exists();
+            if ($categoryExists) {
+                $categoryId = $request->category_id;
+            } else {
+                // If category_id doesn't exist, treat as custom job title
+                $jobTitle = $request->job_title;
+            }
+        } else {
+            // User typed a custom job title
+            $jobTitle = $request->job_title;
+        }
         
         $user = User::create([
             'image' => $imageName,
             'name' => $request->name,
-            'job_title' => $request->job_title,
-            'username' => $username, // Add username field
+            'job_title' => $jobTitle,
+            'username' => $username,
             'otp' => $otp,
             'country_id' => $request->country_id,
             'city_id' => $request->city_id,
             'area' => $request->area,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'category_id' => $categoryId, // Will be null if custom job title
         ]);
         
         Mail::raw("Your OTP code is: $otp", function($message) use ($user) {
