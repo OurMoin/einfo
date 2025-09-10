@@ -90,31 +90,92 @@ class PostController extends Controller
         return back()->with('success', 'Post created successfully!');
     }
 
-    // Updated method for category-based posts with profile support
-    public function showByCategory($slug, Request $request)
+    // Updated method for category-based posts with subcategory support
+    public function showByCategory(Request $request, $slug, $subcategorySlug = null)
     {
-        // Slug দিয়ে category খুঁজুন
+        // Main category খুঁজুন
         $category = Category::where('slug', $slug)->first();
         
         if (!$category) {
             abort(404, 'Category not found');
         }
         
+        $currentSubcategory = null;
+        
+        if ($subcategorySlug) {
+            // Subcategory আছে কিনা check করুন
+            $currentSubcategory = Category::where('slug', $subcategorySlug)
+                                        ->where('parent_cat_id', $category->id)
+                                        ->first();
+            
+            if (!$currentSubcategory) {
+                abort(404, 'Subcategory not found');
+            }
+            
+            // Subcategory এর posts/users নিন
+            $targetCategoryId = $currentSubcategory->id;
+        } else {
+            // Main category এর সব posts/users নিন (including subcategories)
+            $categoryIds = collect([$category->id]);
+            
+            // সব child categories add করুন
+            $childCategories = Category::where('parent_cat_id', $category->id)->pluck('id');
+            $categoryIds = $categoryIds->merge($childCategories);
+            
+            $targetCategoryId = $categoryIds->toArray();
+        }
+        
         // Check if there are users with this category_id (profile data)
-        $hasUsers = User::where('category_id', $category->id)->exists();
+        if ($subcategorySlug) {
+            $hasUsers = User::where('category_id', $targetCategoryId)->exists();
+        } else {
+            $hasUsers = User::whereIn('category_id', $targetCategoryId)->exists();
+        }
         
         if ($hasUsers) {
             // Load users if they exist for this category
-            $posts = User::where('category_id', $category->id)
-                        ->with('category')
-                        ->paginate(12);
+            if ($subcategorySlug) {
+                $posts = User::where('category_id', $targetCategoryId)
+                            ->with('category');
+            } else {
+                $posts = User::whereIn('category_id', $targetCategoryId)
+                            ->with('category');
+            }
         } else {
             // Load regular posts for product/service categories  
-            $posts = Post::with(['user', 'category'])
-                         ->where('category_id', $category->id)
-                         ->latest()
-                         ->paginate(12);
+            if ($subcategorySlug) {
+                $posts = Post::with(['user', 'category'])
+                             ->where('category_id', $targetCategoryId)
+                             ->latest();
+            } else {
+                $posts = Post::with(['user', 'category'])
+                             ->whereIn('category_id', $targetCategoryId)
+                             ->latest();
+            }
         }
+        
+        // Sorting handle করুন
+        if ($request->get('sort')) {
+            switch ($request->get('sort')) {
+                case 'price-low':
+                    $posts = $posts->orderBy('price', 'asc');
+                    break;
+                case 'price-high':
+                    $posts = $posts->orderBy('price', 'desc');
+                    break;
+                case 'newest':
+                    $posts = $posts->orderBy('created_at', 'desc');
+                    break;
+                default:
+                    $posts = $posts->latest();
+            }
+        }
+        
+        $posts = $posts->paginate(12);
+        
+        // Ensure variables are always set
+        $currentSubcategory = $currentSubcategory ?? null;
+        $currentSubsubcategory = $currentSubsubcategory ?? null;
         
         // AJAX request এর জন্য
         if ($request->ajax()) {
@@ -124,7 +185,12 @@ class PostController extends Controller
             ]);
         }
         
-        return view('frontend.products', compact('posts', 'category'));
+        return view('frontend.products', [
+            'posts' => $posts,
+            'category' => $category,
+            'currentSubcategory' => $currentSubcategory,
+            'currentSubsubcategory' => $currentSubsubcategory
+        ]);
     }
    
     /**

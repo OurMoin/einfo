@@ -218,6 +218,112 @@
         @endif
     </div>
 </div>
+
+
+<!-- Second Level Navigation for Subcategories -->
+@if(isset($category))
+    @php
+        $currentSubcategory = $currentSubcategory ?? null;
+        $currentSubsubcategory = $currentSubsubcategory ?? null;
+        
+        if($currentSubsubcategory) {
+            // যদি third level এ থাকি, তাহলে sub-subcategories show করব
+            $navCategories = \App\Models\Category::where('parent_cat_id', $currentSubcategory->id)
+                                               ->whereIn('cat_type', ['product', 'service', 'profile'])
+                                               ->get();
+            $showBackButton = true;
+            $backUrl = route('products.category.sub', [$category->slug, $currentSubcategory->slug]);
+            $allText = 'All ' . $currentSubcategory->category_name;
+            $isThirdLevel = true;
+        } elseif($currentSubcategory) {
+            // যদি second level এ থাকি, তাহলে sub-subcategories show করব (যদি থাকে)
+            $subSubCategories = \App\Models\Category::where('parent_cat_id', $currentSubcategory->id)
+                                                  ->whereIn('cat_type', ['product', 'service', 'profile'])
+                                                  ->get();
+            
+            if($subSubCategories->count() > 0) {
+                $navCategories = $subSubCategories;
+                $showBackButton = true;
+                $backUrl = route('products.category', $category->slug);
+                $allText = 'All ' . $currentSubcategory->category_name;
+                $isThirdLevel = false;
+            } else {
+                // যদি sub-subcategories না থাকে তাহলে sibling subcategories show করব
+                $navCategories = \App\Models\Category::where('parent_cat_id', $category->id)
+                                                   ->whereIn('cat_type', ['product', 'service', 'profile'])
+                                                   ->get();
+                $showBackButton = false;
+                $allText = 'All ' . $category->category_name;
+                $isThirdLevel = false;
+            }
+        } else {
+            // First level - subcategories show করব
+            $navCategories = \App\Models\Category::where('parent_cat_id', $category->id)
+                                               ->whereIn('cat_type', ['product', 'service', 'profile'])
+                                               ->get();
+            $showBackButton = false;
+            $allText = 'All ' . $category->category_name;
+            $isThirdLevel = false;
+        }
+    @endphp
+    
+    @if(isset($navCategories) && $navCategories->count() > 0)
+        <div class="scroll-container mt-3">
+            <div class="scroll-content">
+                
+                <!-- Back Button -->
+                @if(isset($showBackButton) && $showBackButton)
+                    <a href="{{ $backUrl }}" class="nav-item-custom back-btn">
+                        <span><i class="bi bi-arrow-left"></i> Back</span>
+                    </a>
+                @endif
+                
+                <!-- All items link -->
+                @if($currentSubsubcategory)
+                    <a href="{{ route('products.category.sub', [$category->slug, $currentSubcategory->slug]) }}" 
+                       class="nav-item-custom">
+                        <span>{{ $allText }}</span>
+                    </a>
+                @elseif($currentSubcategory)
+                    <a href="{{ route('products.category', $category->slug) }}" 
+                       class="nav-item-custom">
+                        <span>{{ $allText }}</span>
+                    </a>
+                @else
+                    <a href="{{ route('products.category', $category->slug) }}" 
+                       class="nav-item-custom {{ !$currentSubcategory ? 'active' : '' }}">
+                        <span>{{ $allText }}</span>
+                    </a>
+                @endif
+                
+                <!-- Navigation Categories -->
+                @foreach($navCategories as $navCat)
+                    @if(isset($isThirdLevel) && $isThirdLevel)
+                        {{-- Third level navigation - sibling sub-subcategories --}}
+                        <a href="{{ route('products.category.subsub', [$category->slug, $currentSubcategory->slug, $navCat->slug]) }}" 
+                           class="nav-item-custom {{ $currentSubsubcategory && $currentSubsubcategory->id == $navCat->id ? 'active' : '' }}">
+                            <span>{{ $navCat->category_name }}</span>
+                        </a>
+                    @elseif($currentSubcategory && isset($navCategories) && $navCategories->first()->parent_cat_id == $currentSubcategory->id)
+                        {{-- Sub-subcategories of current subcategory --}}
+                        <a href="{{ route('products.category.subsub', [$category->slug, $currentSubcategory->slug, $navCat->slug]) }}" 
+                           class="nav-item-custom">
+                            <span>{{ $navCat->category_name }}</span>
+                        </a>
+                    @else
+                        {{-- Second level navigation - subcategories --}}
+                        <a href="{{ route('products.category.sub', [$category->slug, $navCat->slug]) }}" 
+                           class="nav-item-custom {{ $currentSubcategory && $currentSubcategory->id == $navCat->id && !$currentSubsubcategory ? 'active' : '' }}">
+                            <span>{{ $navCat->category_name }}</span>
+                        </a>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+    @endif
+@endif
+
+
    </div>
 </div>
 
