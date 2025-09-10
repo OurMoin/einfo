@@ -4,13 +4,16 @@
 <!-- Dashboard Content -->
 <div class="row mt-3">
    @auth
-   @if(is_null(Auth::user()->email_verified_at))
-   {{-- যদি ইমেইল ভেরিফাই না করা থাকে --}}
+   @if(is_null(Auth::user()->email_verified) || Auth::user()->email_verified > 0)
+   {{-- যদি ইমেইল ভেরিফাই না করা থাকে অথবা email_verified count 1-8 এর মধ্যে থাকে --}}
    <div class="mb-4">
       <div class="card border-warning">
          <div class="card-body">
             <h5 class="card-title text-warning">Verify your email</h5>
             <p class="text-muted">Please enter the OTP sent to your email <strong>{{ Auth::user()->email }}</strong>.</p>
+            @if(Auth::user()->email_verified && Auth::user()->email_verified > 0 && Auth::user()->email_verified < 9)
+            <p class="text-info">OTP attempts: {{ Auth::user()->email_verified }}/9</p>
+            @endif
             <form action="{{ route('verify.otp') }}" method="POST">
                @csrf
                <div class="mb-3">
@@ -18,7 +21,9 @@
                   <input type="text" name="otp" id="otp" class="form-control" placeholder="Enter OTP" required>
                </div>
                <button type="submit" class="btn btn-success">Verify</button>
+               @if(Auth::user()->email_verified < 9)
                <a href="/resend-otp">Send Code Again</a>
+               @endif
             </form>
             @if(session('error'))
             <div class="alert alert-danger mt-3">
@@ -28,15 +33,18 @@
          </div>
       </div>
    </div>
-   @elseif(Auth::user()->email_verified_at && (string)Auth::user()->email_verified_at == '2')
+   @elseif(Auth::user()->email_verified == 9)
+   {{-- যদি email_verified 9 হয় (suspended) --}}
    <div class="mb-4">
-      <div class="card">
+      <div class="card border-danger">
          <div class="card-body">
-            <h5 class="card-title">Your Account is suspended</h5>
+            <h5 class="card-title text-danger">Your Account is suspended</h5>
+            <p class="text-muted">You have exceeded the maximum OTP attempts. Please contact support or try with a different email.</p>
          </div>
       </div>
    </div>
    @else
+   {{-- email_verified == 0 মানে verified --}}
    {{-- চেক করুন এটা নিজের প্রোফাইল নাকি অন্যের প্রোফাইল --}}
    @if(Auth::id() === $user->id)
    {{-- নিজের প্রোফাইল হলে পোস্ট ফর্ম দেখাবে --}}
@@ -65,7 +73,6 @@
                     @enderror
               </div>
 
-
               {{-- Title Field --}}
 <div class="mb-3">
     <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
@@ -83,9 +90,6 @@
     <div class="text-danger">{{ $message }}</div>
     @enderror
 </div>
-
-
-
 
               <script>
 // Categories data from backend
@@ -182,7 +186,6 @@ const priceInput = document.getElementById('price');
 titleInput.addEventListener('input', toggleSubmit);
 priceInput.addEventListener('input', toggleSubmit);
 </script>
-
 
                <div class="mb-3">
                   <label for="image" class="form-label">Choose Image</label>
@@ -301,11 +304,7 @@ priceInput.addEventListener('input', toggleSubmit);
    </div>
    @endguest
 
-   
-
    @include('frontend.products-partial')
-
-
    
 </div>
 {{-- User-specific Posts Loading JavaScript --}}

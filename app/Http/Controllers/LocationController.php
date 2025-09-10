@@ -61,35 +61,36 @@ class LocationController extends Controller
         if (!$user) {
             return back()->with('error', 'User not found.');
         }
-        $maxAttempts = 10;
-        // OTP send info check (session)
-        $otpAttempts = session('otp_attempts', []);
-        // যদি ইতিমধ্যেই email_verified_at 2 হয়, আর OTP পাঠানো যাবে না
-        if ($user->email_verified_at == 2) {
+
+        // যদি ইতিমধ্যেই email_verified 9 হয়, আর OTP পাঠানো যাবে না
+        if ($user->email_verified == 9) {
             return back()->with('error', 'You have reached the maximum OTP requests.');
         }
-        // পুরানো record remove (optional, 1 hour limit)
-        $otpAttempts = array_filter($otpAttempts, function($timestamp) {
-            return $timestamp >= now()->subHour()->timestamp;
-        });
-        if (count($otpAttempts) >= $maxAttempts) {
-            // 10 বার OTP send হলে email_verified_at column এ 2 set করা
-            $user->email_verified_at = 2;
+
+        // Current email_verified count check করুন
+        $currentCount = $user->email_verified ?? 0;
+        
+        // যদি 9 বার হয়ে গেছে তাহলে 9 set করুন এবং OTP পাঠানো বন্ধ করুন
+        if ($currentCount >= 9) {
+            $user->email_verified = 9;
             $user->save();
-            return back()->with('success', 'OTP limit reached. Email marked as verified.');
+            return back()->with('error', 'Maximum OTP attempts reached. Your account is suspended.');
         }
+
         // OTP Generate & Save
         $otp = rand(100000, 999999);
         $user->otp = $otp;
+        
+        // email_verified count বৃদ্ধি করুন
+        $user->email_verified = $currentCount + 1;
         $user->save();
-        // Mail send (optional)
+
+        // Mail send
         Mail::raw("Your OTP code is: $otp", function($message) use ($user) {
             $message->to($user->email)
                     ->subject('Email Verification - Wihima');
         });
-        // Update session attempts
-        $otpAttempts[] = now()->timestamp;
-        session(['otp_attempts' => $otpAttempts]);
+
         return back()->with('success', 'OTP sent successfully!');
     }
     
@@ -97,12 +98,13 @@ class LocationController extends Controller
     {
         $user = Auth::user();
         if($user->otp == $request->otp){
-            $user->email_verified_at = 1;
+            // OTP সঠিক হলে email_verified 0 করুন (verified status)
+            $user->email_verified = 0;
             $user->save();
-        }else{
-          return back()->with('error', 'your otp is incorrect');
+            return back()->with('success', 'Email verified successfully!');
+        } else {
+            return back()->with('error', 'Your OTP is incorrect');
         }
-        return back()->with('success', 'otp verify successfully');
     }
     
     public function reSendOtp()
