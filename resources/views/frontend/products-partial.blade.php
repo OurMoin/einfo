@@ -62,87 +62,24 @@
                     <span class="badge {{ $isOwnProfile ? 'bg-secondary' : 'bg-primary' }} cart-badge {{ $isOwnProfile ? 'disabled' : '' }}">
                        <i class="bi bi-telephone"></i>
                     </span>
-                 <!-- Fixed Product Card Section -->
-@else
-    {{-- Regular product/service card layout --}}
-    <h5 class="card-title mb-0">{{ $item->title ? Str::limit($item->title, 20) : 'No Title' }}</h5>
-    <small class="price-tag text-success">{{ $item->price ? '৳' . $item->price : 'No price' }}</small>
-    
-    @if(!$isOwnPost)
-        {{-- Only show add to cart for others' posts --}}
-        <button class="btn btn-primary btn-sm mt-2 add-to-cart-btn" 
-                data-product-id="{{ $item->id }}" 
-                data-product-name="{{ $item->title }}" 
-                data-product-price="{{ $item->price ?? 0 }}" 
-                data-product-image="{{ $item->image ? asset('uploads/'.$item->image) : asset('profile-image/no-image.jpeg') }}">
-            @if($categoryType == 'service')
-                <i class="bi bi-calendar-check"></i> Book Now
-            @else
-                <i class="bi bi-cart-plus"></i> Add to Cart
-            @endif
-        </button>
-    @else
-        {{-- Show disabled badge for own posts --}}
-        <span class="badge bg-secondary cart-badge disabled mt-2">
-            @if($categoryType == 'service')
-                <i class="bi bi-calendar-check"></i> Your Service
-            @else
-                <i class="bi bi-cart-plus"></i> Your Product
-            @endif
-        </span>
-    @endif
-@endif
-
-<!-- Event Delegation JavaScript (add this once in master.blade.php) -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Event delegation for add to cart buttons
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.add-to-cart-btn')) {
-            const button = e.target.closest('.add-to-cart-btn');
-            const productId = button.getAttribute('data-product-id');
-            const productName = button.getAttribute('data-product-name');
-            const productPrice = button.getAttribute('data-product-price');
-            const productImage = button.getAttribute('data-product-image');
-            
-            console.log('Add to cart clicked:', {productId, productName, productPrice, productImage});
-            
-            // Check if cart system is loaded
-            if (typeof cart === 'undefined') {
-                console.error('Cart system not loaded!');
-                alert('Cart system not loaded. Please refresh the page.');
-                return;
-            }
-            
-            // Validate data
-            if (!productId || !productName) {
-                console.error('Missing product data');
-                return;
-            }
-            
-            // Add to cart
-            cart.addToCart(productId, productName, productPrice || 0, productImage);
-            
-            // Optional: Add button animation
-            button.classList.add('btn-success');
-            button.innerHTML = '<i class="bi bi-check2"></i> Added!';
-            setTimeout(() => {
-                button.classList.remove('btn-success');
-                button.innerHTML = '<i class="bi bi-cart-plus"></i> Add to Cart';
-            }, 2000);
-        }
-    });
-    
-    // Debug: Check if cart system is loaded
-    setTimeout(() => {
-        if (typeof cart === 'undefined') {
-            console.error('❌ Cart system not loaded properly');
-        } else {
-            console.log('✅ Cart system loaded successfully');
-        }
-    }, 1000);
-});
-</script>                           
+                 @else
+                    {{-- Regular product/service card layout --}}
+                    <h5 class="card-title mb-0">{{ $item->title ? Str::limit($item->title, 20) : 'No Title' }}</h5>
+                    <small class="price-tag text-success">{{ $item->price ? Str::limit($item->price, 20) : 'No price' }}</small>
+                    
+                    <span class="badge {{ $isOwnPost ? 'bg-secondary' : 'bg-primary' }} cart-badge {{ $isOwnPost ? 'disabled' : '' }}"
+      @if(!$isOwnPost)
+      onclick="addToCart('{{ $item->id }}', '{{ $item->title }}', '{{ $item->price ?? 0 }}', '{{ $item->image ? asset('uploads/'.$item->image) : asset('profile-image/no-image.jpeg') }}', '{{ $categoryType }}')"
+      style="cursor: pointer;"
+      data-category-type="{{ $categoryType }}"
+      @endif>
+   @if($categoryType == 'service')
+      <i class="bi bi-calendar-check"></i>
+   @else
+      <i class="bi bi-cart-plus"></i>
+   @endif
+</span>
+                 @endif                            
               </div>
            </div>
         </div>
