@@ -6,6 +6,7 @@ use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\OrderController;
 
 Route::get('/send', [LocationController::class, 'sendOtp']);
 Route::post('/verify-otp', [LocationController::class, 'verifyOtp'])->name('verify.otp');
@@ -49,6 +50,14 @@ Route::get('/products/{category}', [PostController::class, 'showByCategory'])->n
 
 // Add this route for post deletion
 Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy')->middleware('auth');
+
+// web.php এ এই routes add করুন
+Route::middleware('auth')->group(function () {
+    Route::post('/orders/store', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+});
 
 require __DIR__.'/auth.php';
 Route::get('/{username}', [LocationController::class, 'show'])->name('profile.show');

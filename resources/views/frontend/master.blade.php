@@ -130,7 +130,7 @@ input::-ms-clear {
   <div class="container-fluid d-flex align-items-center">
     <!-- Left: Logo -->
     <a class="navbar-brand" href="/">
-      <img src="https://www.freepnglogos.com/uploads/w-logo/red-circle-w-letter-logos-get-wrapped-official-website-1.png"
+      <img src="https://einfo.site/logo.png"
            class="rounded-circle"
            alt="User"
            style="width:32px; height:32px; object-fit:cover;">
@@ -702,6 +702,503 @@ document.addEventListener('DOMContentLoaded', function() {
     initDeleteButtons();
 });
 </script>
+
+
+
+
+
+
+
+<!-- Floating Cart Icon -->
+<div class="floating-cart" id="floatingCart">
+    <div class="cart-icon">
+        <i class="bi bi-cart3"></i>
+        <span class="cart-badge" id="cartBadge">0</span>
+    </div>
+</div>
+
+<!-- Cart Modal -->
+<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Shopping Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cartItems">
+                    <div class="text-center text-muted" id="emptyCart">
+                        <i class="bi bi-cart-x fs-1"></i>
+                        <p>Your cart is empty</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="w-100">
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total: ৳<span id="cartTotal">0</span></strong>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100" id="orderBtn" onclick="showOrderForm()">
+                        Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Form Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="orderForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control" id="customerPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Shipping Address *</label>
+                        <textarea class="form-control" id="customerAddress" rows="3" required></textarea>
+                    </div>
+                    <div class="border p-3 bg-light">
+                        <h6>Order Summary:</h6>
+                        <div id="orderSummary"></div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total: ৳<span id="orderTotal">0</span></strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="submitOrderBtn">
+                        Confirm Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Styles -->
+<style>
+/* Floating Cart Styles */
+.floating-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.cart-icon {
+    background: #007bff;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.cart-icon:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.cart-badge.hidden {
+    display: none;
+}
+
+/* Cart Item Styles */
+.cart-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 15px;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.cart-item-price {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.quantity-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.quantity-btn:hover {
+    background: #e9ecef;
+}
+
+.quantity-input {
+    width: 50px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    border-left: none;
+    border-right: none;
+    height: 30px;
+}
+
+.remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.remove-btn:hover {
+    background: #c82333;
+}
+
+/* Animation */
+@keyframes bounceIn {
+    0% { transform: scale(0.3) rotate(180deg); opacity: 0; }
+    50% { transform: scale(1.05) rotate(0deg); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.cart-animate {
+    animation: bounceIn 0.6s ease;
+}
+</style>
+
+<!-- JavaScript Cart System -->
+<script>
+class CartSystem {
+    constructor() {
+        this.cart = JSON.parse(localStorage.getItem('shopping_cart')) || [];
+        this.init();
+    }
+
+    init() {
+        this.updateCartBadge();
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Floating cart click
+        document.getElementById('floatingCart').addEventListener('click', () => {
+            this.showCartModal();
+        });
+
+        // Order form submit
+        document.getElementById('orderForm').addEventListener('submit', (e) => {
+            this.submitOrder(e);
+        });
+    }
+
+    addToCart(productId, productName, productPrice, productImage) {
+        const existingItem = this.cart.find(item => item.id === productId);
+        
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            this.cart.push({
+                id: productId,
+                name: productName,
+                price: parseFloat(productPrice),
+                image: productImage,
+                quantity: 1
+            });
+        }
+        
+        this.saveCart();
+        this.updateCartBadge();
+        this.showAddedAnimation();
+        this.showToast(`${productName} added to cart!`, 'success');
+    }
+
+    removeFromCart(productId) {
+        this.cart = this.cart.filter(item => item.id !== productId);
+        this.saveCart();
+        this.updateCartBadge();
+        this.updateCartModal();
+    }
+
+    updateQuantity(productId, newQuantity) {
+        if (newQuantity <= 0) {
+            this.removeFromCart(productId);
+            return;
+        }
+        
+        const item = this.cart.find(item => item.id === productId);
+        if (item) {
+            item.quantity = parseInt(newQuantity);
+            this.saveCart();
+            this.updateCartModal();
+        }
+    }
+
+    saveCart() {
+        localStorage.setItem('shopping_cart', JSON.stringify(this.cart));
+    }
+
+    updateCartBadge() {
+        const badge = document.getElementById('cartBadge');
+        const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
+        
+        badge.textContent = totalItems;
+        badge.classList.toggle('hidden', totalItems === 0);
+    }
+
+    showCartModal() {
+        this.updateCartModal();
+        new bootstrap.Modal(document.getElementById('cartModal')).show();
+    }
+
+    updateCartModal() {
+        const cartItems = document.getElementById('cartItems');
+        const emptyCart = document.getElementById('emptyCart');
+        const cartTotal = document.getElementById('cartTotal');
+        
+        if (this.cart.length === 0) {
+            emptyCart.style.display = 'block';
+            cartTotal.textContent = '0';
+            return;
+        }
+        
+        emptyCart.style.display = 'none';
+        
+        let html = '';
+        let total = 0;
+        
+        this.cart.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            
+            html += `
+                <div class="cart-item">
+                    <img src="${item.image}" alt="${item.name}">
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">${item.name}</div>
+                        <div class="cart-item-price">৳${item.price}</div>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', ${item.quantity - 1})">-</button>
+                            <input type="number" class="quantity-input" value="${item.quantity}" 
+                                   onchange="cart.updateQuantity('${item.id}', this.value)">
+                            <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-end mb-2">৳${itemTotal}</div>
+                        <button class="remove-btn" onclick="cart.removeFromCart('${item.id}')">Remove</button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        cartItems.innerHTML = html;
+        cartTotal.textContent = total.toFixed(2);
+    }
+
+    showAddedAnimation() {
+        const cartIcon = document.querySelector('.cart-icon');
+        cartIcon.classList.add('cart-animate');
+        setTimeout(() => {
+            cartIcon.classList.remove('cart-animate');
+        }, 600);
+    }
+
+    showToast(message, type = 'success') {
+        // Toast notification function (reuse from your existing code)
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+
+    async submitOrder(e) {
+        e.preventDefault();
+        
+        if (this.cart.length === 0) {
+            this.showToast('Your cart is empty!', 'error');
+            return;
+        }
+        
+        const phone = document.getElementById('customerPhone').value;
+        const address = document.getElementById('customerAddress').value;
+        const total = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        const submitBtn = document.getElementById('submitOrderBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Placing Order...';
+        
+        try {
+            const response = await fetch('{{ route("orders.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    phone: phone,
+                    shipping_address: address,
+                    total_amount: total,
+                    cart_items: this.cart
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.cart = [];
+                this.saveCart();
+                this.updateCartBadge();
+                
+                // Close modals
+                bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+                
+                this.showToast('Order placed successfully!', 'success');
+                
+                // Reset form
+                document.getElementById('orderForm').reset();
+            } else {
+                this.showToast(data.message || 'Order failed!', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.showToast('Something went wrong!', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Confirm Order';
+        }
+    }
+}
+
+// Initialize cart system
+const cart = new CartSystem();
+
+// Global functions
+function showOrderForm() {
+    if (cart.cart.length === 0) {
+        cart.showToast('Your cart is empty!', 'error');
+        return;
+    }
+    
+    // Update order summary
+    const orderSummary = document.getElementById('orderSummary');
+    const orderTotal = document.getElementById('orderTotal');
+    
+    let html = '';
+    let total = 0;
+    
+    cart.cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        html += `
+            <div class="d-flex justify-content-between">
+                <span>${item.name} x ${item.quantity}</span>
+                <span>৳${itemTotal}</span>
+            </div>
+        `;
+    });
+    
+    orderSummary.innerHTML = html;
+    orderTotal.textContent = total.toFixed(2);
+    
+    // Hide cart modal and show order modal
+    bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+    new bootstrap.Modal(document.getElementById('orderModal')).show();
+}
+
+// Add to cart function for product cards
+function addToCart(productId, productName, productPrice, productImage) {
+    cart.addToCart(productId, productName, productPrice, productImage);
+}
+</script>
+
+
+
+
+
 @yield('main-content')
 
 <!-- Bootstrap JS -->
