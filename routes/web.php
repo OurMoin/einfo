@@ -3,10 +3,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\OrderController;
 
 Route::get('/send', [LocationController::class, 'sendOtp']);
 Route::post('/verify-otp', [LocationController::class, 'verifyOtp'])->name('verify.otp');
@@ -19,8 +19,8 @@ Route::get('/', [PostController::class, 'index']);
 // AJAX routes
 Route::get('/posts/load-more', [PostController::class, 'index'])->name('posts.loadmore');
 Route::get('/posts/load-more/{userId}', [LocationController::class, 'loadMoreUserPosts'])->name('posts.loadmore.user');
-
 Route::post('/store', [PostController::class, 'store'])->name('post.store');
+
 Route::get('/dashboard', function () {
     $user = Auth::user();
     return redirect('/'.$user->username);
@@ -30,6 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Buy and Sell routes
+    Route::get('/buy', [OrderController::class, 'buyPage'])->name('buy');
+    Route::get('/sell', [OrderController::class, 'sellPage'])->name('sell');
 });
 
 Route::post('/comment/store', [CommentController::class, 'commentStore'])->name('comment.store');
@@ -51,7 +55,7 @@ Route::get('/products/{category}', [PostController::class, 'showByCategory'])->n
 // Add this route for post deletion
 Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy')->middleware('auth');
 
-// web.php এ এই routes add করুন
+// Order routes
 Route::middleware('auth')->group(function () {
     Route::post('/orders/store', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
