@@ -1,5 +1,5 @@
 <!-- Floating Cart Icon -->
-<div class="floating-cart" id="floatingCart">
+<div class="floating-cart" id="floatingCart" style="display: none;">
     <div class="cart-icon">
         <i class="bi bi-cart3"></i>
         <span class="cart-count" id="cartCount">0</span>
@@ -7,27 +7,28 @@
 </div>
 
 <!-- Cart Modal -->
-<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Shopping Cart</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="cartModalLabel">Shopping Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div id="cartItems">
-                    <div class="text-center text-muted" id="emptyCart">
-                        <i class="bi bi-cart-x fs-1"></i>
-                        <p>Your cart is empty</p>
-                    </div>
+            <div class="modal-body" id="cartModalBody">
+                <div id="cartItemsList">
+                    <!-- Cart items will be inserted here -->
+                </div>
+                <div class="text-center text-muted py-5" id="emptyCartMessage" style="display: none;">
+                    <i class="bi bi-cart-x fs-1"></i>
+                    <p>Your cart is empty</p>
                 </div>
             </div>
             <div class="modal-footer">
                 <div class="w-100">
                     <div class="d-flex justify-content-between mb-3">
-                        <strong>Total: ৳<span id="cartTotal">0</span></strong>
+                        <strong>Total: ৳<span id="cartTotalAmount">0.00</span></strong>
                     </div>
-                    <button type="button" class="btn btn-primary w-100" id="orderBtn" onclick="showOrderForm()">
+                    <button type="button" class="btn btn-primary w-100" id="proceedOrderBtn">
                         Place Order
                     </button>
                 </div>
@@ -36,26 +37,26 @@
     </div>
 </div>
 
-<!-- Service Time Modal -->
-<div class="modal fade" id="serviceTimeModal" tabindex="-1" aria-hidden="true">
+<!-- Service Time Selection Modal -->
+<div class="modal fade" id="serviceBookingModal" tabindex="-1" aria-labelledby="serviceBookingModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Select Service Time</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="serviceBookingModalLabel">Select Service Time</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label">Service Name:</label>
-                    <p id="serviceName" class="fw-bold"></p>
+                    <p id="selectedServiceName" class="fw-bold text-primary"></p>
                 </div>
                 <div class="mb-3">
-                    <label for="serviceDate" class="form-label">Select Date *</label>
-                    <input type="date" class="form-control" id="serviceDate" required>
+                    <label for="bookingDate" class="form-label">Select Date *</label>
+                    <input type="date" class="form-control" id="bookingDate" required>
                 </div>
                 <div class="mb-3">
-                    <label for="serviceTime" class="form-label">Select Time *</label>
-                    <select class="form-control" id="serviceTime" required>
+                    <label for="bookingTimeSlot" class="form-label">Select Time *</label>
+                    <select class="form-control" id="bookingTimeSlot" required>
                         <option value="">Choose time slot</option>
                         <option value="09:00">09:00 AM</option>
                         <option value="10:00">10:00 AM</option>
@@ -71,43 +72,45 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmServiceTime()">Confirm</button>
+                <button type="button" class="btn btn-primary" id="confirmServiceBookingBtn">Confirm Booking</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Order Form Modal -->
-<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="orderFormModal" tabindex="-1" aria-labelledby="orderFormModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Order Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="orderFormModalLabel">Complete Your Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="orderForm">
+            <form id="finalOrderForm">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Phone Number *</label>
-                        <input type="tel" class="form-control" id="customerPhone" required>
+                        <label for="orderPhoneNumber" class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control" id="orderPhoneNumber" placeholder="01xxxxxxxxx" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Shipping Address *</label>
-                        <textarea class="form-control" id="customerAddress" rows="3" required></textarea>
+                        <label for="orderShippingAddress" class="form-label">Shipping Address *</label>
+                        <textarea class="form-control" id="orderShippingAddress" rows="3" placeholder="Enter your full address" required></textarea>
                     </div>
-                    <div class="border p-3 bg-light">
-                        <h6>Order Summary:</h6>
-                        <div id="orderSummary"></div>
+                    <div class="border p-3 bg-light rounded">
+                        <h6 class="mb-3">Order Summary:</h6>
+                        <div id="finalOrderSummary">
+                            <!-- Order items will be listed here -->
+                        </div>
                         <hr>
                         <div class="d-flex justify-content-between">
-                            <strong>Total: ৳<span id="orderTotal">0</span></strong>
+                            <strong>Total Amount: ৳<span id="finalOrderTotal">0.00</span></strong>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" id="submitOrderBtn">
-                        Confirm Order
+                    <button type="submit" class="btn btn-success" id="finalSubmitOrderBtn">
+                        <i class="bi bi-check-circle"></i> Confirm Order
                     </button>
                 </div>
             </form>
@@ -115,420 +118,919 @@
     </div>
 </div>
 
-<!-- Fixed JavaScript -->
+<!-- CSS Styles -->
+<style>
+.floating-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: #007bff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.floating-cart:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.cart-icon {
+    position: relative;
+    color: white;
+    font-size: 24px;
+}
+
+.cart-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+.cart-count.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.cart-animate {
+    animation: cartBounce 0.6s ease;
+}
+
+@keyframes cartBounce {
+    0%, 20%, 60%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    80% { transform: translateY(-5px); }
+}
+
+.cart-item-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.cart-item-row:last-child {
+    border-bottom: none;
+}
+
+.cart-item-row.removing {
+    opacity: 0.3;
+    transform: translateX(-10px);
+}
+
+.cart-item-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.cart-item-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.cart-item-price {
+    color: #28a745;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.cart-service-time {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.quantity-controls-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.quantity-control-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ddd;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.quantity-control-btn:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.quantity-control-btn:active {
+    transform: scale(0.95);
+}
+
+.quantity-input-field {
+    width: 60px;
+    height: 32px;
+    border: 1px solid #ddd;
+    text-align: center;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.quantity-input-field:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.cart-item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.cart-item-total {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+}
+
+.remove-item-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.remove-item-btn:hover {
+    background: #f8f9fa;
+    color: #c82333;
+}
+
+.service-badge {
+    background: #17a2b8;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.fade-out {
+    animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Hide floating cart when empty */
+.floating-cart.hidden {
+    display: none !important;
+}
+</style>
+
+<!-- Updated JavaScript -->
 <script>
-// Search functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const searchIcon = document.getElementById('searchIcon');
-    
-    if (searchInput && searchIcon) {
-        searchInput.addEventListener('input', () => {
-            if(searchInput.value.length > 0){
-                searchIcon.style.display = 'block';
-                searchInput.classList.remove('text-center');
-                searchInput.classList.add('text-start');
-            } else {
-                searchIcon.style.display = 'none';
-                searchInput.classList.remove('text-start');
-                searchInput.classList.add('text-center');
-            }
-        });
-    }
-});
-
-function handleSearch(event) {
-    event.preventDefault();
-    const query = document.getElementById('searchInput').value.trim();
-    if (query) {
-        console.log('Searching for:', query);
-    }
-}
-
-// Fixed Cart System
-class SimpleCart {
+// Enhanced Cart System with Login Check and Hidden Empty Cart
+class ImprovedCartSystem {
     constructor() {
-        this.cart = JSON.parse(localStorage.getItem('shopping_cart')) || [];
-        this.currentServiceItem = null;
-        this.processing = false;
-        this.init();
+        this.cart = this.loadCartData();
+        this.currentServiceData = null;
+        this.isProcessing = false;
+        this.modalInstances = {};
+        this.initialize();
     }
 
-    init() {
-        this.updateCartCount();
-        this.bindEvents();
-        this.setMinDate();
+    initialize() {
+        this.setupEventListeners();
+        this.updateAllCartDisplays();
+        this.setDateConstraints();
+        console.log('Cart system initialized with', this.cart.length, 'items');
     }
 
-    setMinDate() {
+    loadCartData() {
+        try {
+            const savedCart = localStorage.getItem('improved_cart_data');
+            return savedCart ? JSON.parse(savedCart) : [];
+        } catch (error) {
+            console.error('Error loading cart data:', error);
+            return [];
+        }
+    }
+
+    saveCartData() {
+        try {
+            localStorage.setItem('improved_cart_data', JSON.stringify(this.cart));
+        } catch (error) {
+            console.error('Error saving cart data:', error);
+        }
+    }
+
+    generateUniqueItemId() {
+        return 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+    }
+
+    setDateConstraints() {
         setTimeout(() => {
-            const serviceDate = document.getElementById('serviceDate');
-            if (serviceDate) {
+            const dateInput = document.getElementById('bookingDate');
+            if (dateInput) {
                 const today = new Date().toISOString().split('T')[0];
-                serviceDate.min = today;
+                dateInput.min = today;
             }
-        }, 100);
+        }, 500);
     }
 
-    bindEvents() {
-    const floatingCart = document.getElementById('floatingCart');
-    if (floatingCart) {
-        floatingCart.addEventListener('click', () => {
-            this.showCartModal();
-        });
+    // Check if user is authenticated
+    checkUserAuthentication() {
+        // Method 1: Check for authentication meta tag
+        const authMeta = document.querySelector('meta[name="user-authenticated"]');
+        if (authMeta) {
+            return authMeta.getAttribute('content') === 'true';
+        }
+
+        // Method 2: Check for user data in global variables
+        if (typeof window.userAuthenticated !== 'undefined') {
+            return window.userAuthenticated;
+        }
+
+        // Method 3: Check for Laravel's common user variable
+        if (typeof window.Laravel !== 'undefined' && window.Laravel.user) {
+            return true;
+        }
+
+        // Method 4: Check local storage or session storage
+        const authToken = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        if (authToken) {
+            return true;
+        }
+
+        // Default: assume not authenticated
+        return false;
     }
 
-    const orderForm = document.getElementById('orderForm');
-    if (orderForm) {
-        orderForm.addEventListener('submit', (e) => {
-            this.submitOrder(e);
-        });
-    }
-
-    // ADD THIS: Event delegation for cart operations
-    document.addEventListener('click', (e) => {
-        const action = e.target.getAttribute('data-action');
-        const index = parseInt(e.target.getAttribute('data-index'));
+    // Redirect to login page
+    redirectToLogin() {
+        // You can customize this URL based on your application's routing
+        const loginUrl = '/login';
         
-        if (action && !isNaN(index)) {
-            if (action === 'increase') {
-                this.updateQuantity(index, this.cart[index].quantity + 1);
-            } else if (action === 'decrease') {
-                this.updateQuantity(index, this.cart[index].quantity - 1);
-            } else if (action === 'remove') {
-                this.removeFromCart(index);
-            }
-        }
-    });
+        // Store current page for redirect after login
+        sessionStorage.setItem('intended_url', window.location.href);
+        
+        // Redirect to login
+        window.location.href = loginUrl;
+    }
 
-    // ADD THIS: Event delegation for quantity input
-    document.addEventListener('change', (e) => {
-        if (e.target.getAttribute('data-action') === 'change') {
-            const index = parseInt(e.target.getAttribute('data-index'));
-            if (!isNaN(index)) {
-                this.updateQuantity(index, parseInt(e.target.value));
-            }
+    setupEventListeners() {
+        // Floating cart click
+        const floatingCart = document.getElementById('floatingCart');
+        if (floatingCart) {
+            floatingCart.addEventListener('click', () => this.openCartModal());
         }
-    });
-}
+
+        // Order button click with authentication check
+        const proceedBtn = document.getElementById('proceedOrderBtn');
+        if (proceedBtn) {
+            proceedBtn.addEventListener('click', () => {
+                // Check if user is authenticated
+                if (!this.checkUserAuthentication()) {
+                    this.showNotification('Please login to place your order', 'error');
+                    
+                    // Close cart modal first
+                    if (this.modalInstances.cart) {
+                        this.modalInstances.cart.hide();
+                    }
+                    
+                    // Redirect to login after a short delay
+                    setTimeout(() => {
+                        this.redirectToLogin();
+                    }, 1500);
+                    
+                    return;
+                }
+                
+                // If authenticated, proceed with order
+                this.openOrderForm();
+            });
+        }
+
+        // Service booking confirmation
+        const confirmServiceBtn = document.getElementById('confirmServiceBookingBtn');
+        if (confirmServiceBtn) {
+            confirmServiceBtn.addEventListener('click', () => this.confirmServiceBooking());
+        }
+
+        // Order form submission
+        const orderForm = document.getElementById('finalOrderForm');
+        if (orderForm) {
+            orderForm.addEventListener('submit', (e) => this.submitFinalOrder(e));
+        }
+
+        // Event delegation for cart controls
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            // Quantity increase
+            if (target.hasAttribute('data-increase-qty')) {
+                e.preventDefault();
+                const itemId = target.getAttribute('data-increase-qty');
+                this.changeQuantity(itemId, 1);
+            }
+            
+            // Quantity decrease
+            if (target.hasAttribute('data-decrease-qty')) {
+                e.preventDefault();
+                const itemId = target.getAttribute('data-decrease-qty');
+                this.changeQuantity(itemId, -1);
+            }
+            
+            // Remove item
+            if (target.hasAttribute('data-remove-item')) {
+                e.preventDefault();
+                const itemId = target.getAttribute('data-remove-item');
+                this.removeItem(itemId);
+            }
+        });
+
+        // Quantity input change
+        document.addEventListener('input', (e) => {
+            if (e.target.hasAttribute('data-qty-input')) {
+                const itemId = e.target.getAttribute('data-qty-input');
+                const newQty = parseInt(e.target.value) || 1;
+                this.setQuantity(itemId, newQty);
+            }
+        });
+    }
 
     addToCart(productId, productName, productPrice, productImage, categoryType = 'product') {
-        if (this.processing) return;
-        this.processing = true;
-        setTimeout(() => this.processing = false, 1000);
+        if (this.isProcessing) return;
+        this.isProcessing = true;
+        
+        setTimeout(() => this.isProcessing = false, 1000);
 
         if (categoryType === 'service') {
-            this.currentServiceItem = {
-                id: productId,
-                name: productName,
-                price: parseFloat(productPrice) || 0,
-                image: productImage,
-                type: 'service'
+            this.currentServiceData = {
+                productId,
+                productName,
+                productPrice: parseFloat(productPrice) || 0,
+                productImage,
+                categoryType
             };
             
-            const serviceName = document.getElementById('serviceName');
-            if (serviceName) {
-                serviceName.textContent = productName;
-            }
-            
-            const serviceModal = new bootstrap.Modal(document.getElementById('serviceTimeModal'));
-            serviceModal.show();
+            this.showServiceBookingModal(productName);
             return;
         }
 
-        this.addItemToCart(productId, productName, productPrice, productImage, 'product');
+        this.addItemToCart(productId, productName, productPrice, productImage, categoryType);
     }
 
-    addItemToCart(productId, productName, productPrice, productImage, type, serviceTime = null) {
-        const existingItem = this.cart.find(item => 
-            item.id === productId && 
-            (type === 'product' || item.service_time === serviceTime)
-        );
+    addItemToCart(productId, productName, productPrice, productImage, categoryType, serviceDateTime = null) {
+        let existingItem = null;
         
-        if (existingItem && type === 'product') {
+        // For products, check existing items
+        if (categoryType === 'product') {
+            existingItem = this.cart.find(item => 
+                item.productId === productId && item.categoryType === 'product'
+            );
+        }
+
+        if (existingItem) {
             existingItem.quantity += 1;
         } else {
             const newItem = {
-                id: productId,
-                name: productName,
-                price: parseFloat(productPrice) || 0,
-                image: productImage,
+                id: this.generateUniqueItemId(),
+                productId,
+                productName,
+                productPrice: parseFloat(productPrice) || 0,
+                productImage,
                 quantity: 1,
-                type: type
+                categoryType,
+                addedAt: new Date().toISOString()
             };
 
-            if (serviceTime) {
-                newItem.service_time = serviceTime;
+            if (serviceDateTime) {
+                newItem.serviceDateTime = serviceDateTime;
             }
 
             this.cart.push(newItem);
         }
-        
-        this.saveCart();
-        this.updateCartCount();
-        this.showAnimation();
-        this.showToast(`${productName} added to cart!`, 'success');
+
+        this.saveCartData();
+        this.updateAllCartDisplays();
+        this.showCartAnimation();
+        this.showNotification(`${productName} added successfully!`, 'success');
     }
 
-    removeFromCart(itemIndex) {
-        this.cart.splice(itemIndex, 1);
-        this.saveCart();
-        this.updateCartCount();
-        this.updateCartModal();
+    removeItem(itemId) {
+        // Add removing class for animation
+        const itemElement = document.querySelector(`[data-cart-item-id="${itemId}"]`);
+        if (itemElement) {
+            itemElement.classList.add('removing');
+        }
+
+        setTimeout(() => {
+            const itemIndex = this.cart.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                const removedItem = this.cart.splice(itemIndex, 1)[0];
+                this.saveCartData();
+                this.updateAllCartDisplays();
+                this.showNotification(`${removedItem.productName} removed from cart`, 'info');
+            }
+        }, 200);
     }
 
-    updateQuantity(itemIndex, newQuantity) {
-        if (newQuantity <= 0) {
-            this.removeFromCart(itemIndex);
+    changeQuantity(itemId, change) {
+        const item = this.cart.find(item => item.id === itemId);
+        if (item) {
+            const newQuantity = item.quantity + change;
+            if (newQuantity <= 0) {
+                this.removeItem(itemId);
+            } else {
+                item.quantity = newQuantity;
+                this.saveCartData();
+                this.updateAllCartDisplays();
+            }
+        }
+    }
+
+    setQuantity(itemId, quantity) {
+        if (quantity <= 0) {
+            this.removeItem(itemId);
             return;
         }
         
-        if (this.cart[itemIndex]) {
-            this.cart[itemIndex].quantity = parseInt(newQuantity);
-            this.saveCart();
-            this.updateCartModal();
-            this.updateCartCount();
+        const item = this.cart.find(item => item.id === itemId);
+        if (item) {
+            item.quantity = quantity;
+            this.saveCartData();
+            this.updateAllCartDisplays();
         }
     }
 
-    saveCart() {
-        localStorage.setItem('shopping_cart', JSON.stringify(this.cart));
-    }
-
-    updateCartCount() {
-        const cartCount = document.getElementById('cartCount');
-        if (!cartCount) return;
-        
-        const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
-        
-        cartCount.textContent = totalItems;
-        
-        if (totalItems > 0) {
-            cartCount.classList.add('show');
-        } else {
-            cartCount.classList.remove('show');
-        }
-    }
-
-    showCartModal() {
+    updateAllCartDisplays() {
+        this.updateCartCounter();
         this.updateCartModal();
-        const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
-        cartModal.show();
+        this.updateFloatingCartVisibility();
+    }
+
+    // New method to handle floating cart visibility
+    updateFloatingCartVisibility() {
+        const floatingCart = document.getElementById('floatingCart');
+        if (floatingCart) {
+            const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            if (totalItems > 0) {
+                floatingCart.style.display = 'flex';
+                floatingCart.classList.remove('hidden');
+            } else {
+                floatingCart.style.display = 'none';
+                floatingCart.classList.add('hidden');
+            }
+        }
+    }
+
+    updateCartCounter() {
+        const cartCounter = document.getElementById('cartCount');
+        if (cartCounter) {
+            const totalItems = this.cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCounter.textContent = totalItems;
+            
+            if (totalItems > 0) {
+                cartCounter.classList.add('show');
+            } else {
+                cartCounter.classList.remove('show');
+            }
+        }
     }
 
     updateCartModal() {
-    const cartItems = document.getElementById('cartItems');
-    const emptyCart = document.getElementById('emptyCart');
-    const cartTotal = document.getElementById('cartTotal');
-    
-    if (!cartItems || !emptyCart || !cartTotal) return;
-    
-    if (this.cart.length === 0) {
-        emptyCart.style.display = 'block';
-        cartTotal.textContent = '0';
-        return;
-    }
-    
-    emptyCart.style.display = 'none';
-    
-    let html = '';
-    let total = 0;
-    
-    this.cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
+        const cartItemsList = document.getElementById('cartItemsList');
+        const emptyMessage = document.getElementById('emptyCartMessage');
+        const totalAmount = document.getElementById('cartTotalAmount');
         
-        const serviceTimeDisplay = item.service_time ? 
-            `<small class="text-muted d-block">Service Time: ${new Date(item.service_time).toLocaleString()}</small>` : '';
-        
-        const quantityControls = item.type === 'service' ? 
-            `<span class="badge bg-info">Service Booking</span>` :
-            `<div class="quantity-controls">
-                <button class="quantity-btn" data-action="decrease" data-index="${index}">-</button>
-                <input type="number" class="quantity-input" value="${item.quantity}" 
-                       data-action="change" data-index="${index}" min="1">
-                <button class="quantity-btn" data-action="increase" data-index="${index}">+</button>
-            </div>`;
-        
-        html += `
-            <div class="cart-item">
-                <img src="${item.image}" alt="${item.name}">
-                <div class="cart-item-info">
-                    <div class="cart-item-title">${item.name}</div>
-                    <div class="cart-item-price">৳${item.price}</div>
-                    ${serviceTimeDisplay}
-                    ${quantityControls}
-                </div>
-                <div>
-                    <div class="text-end mb-2">৳${itemTotal}</div>
-                    <button class="remove-btn" data-action="remove" data-index="${index}">Remove</button>
-                </div>
-            </div>
-        `;
-    });
-    
-    cartItems.innerHTML = html;
-    cartTotal.textContent = total.toFixed(2);
-}
+        if (!cartItemsList || !emptyMessage || !totalAmount) return;
 
-    showAnimation() {
-        const cartIcon = document.querySelector('.cart-icon');
-        if (cartIcon) {
-            cartIcon.classList.add('cart-animate');
-            setTimeout(() => {
-                cartIcon.classList.remove('cart-animate');
-            }, 600);
+        if (this.cart.length === 0) {
+            cartItemsList.innerHTML = '';
+            emptyMessage.style.display = 'block';
+            totalAmount.textContent = '0.00';
+            return;
+        }
+
+        emptyMessage.style.display = 'none';
+        
+        let cartHTML = '';
+        let total = 0;
+
+        this.cart.forEach(item => {
+            const itemTotal = item.productPrice * item.quantity;
+            total += itemTotal;
+
+            const serviceTimeDisplay = item.serviceDateTime ? 
+                `<div class="cart-service-time">
+                    <i class="bi bi-calendar-event"></i> ${new Date(item.serviceDateTime).toLocaleString()}
+                </div>` : '';
+
+            const quantityControls = item.categoryType === 'service' ? 
+                `<div class="service-badge">Service Booking</div>` :
+                `<div class="quantity-controls-wrapper">
+                    <button class="quantity-control-btn" data-decrease-qty="${item.id}" type="button">-</button>
+                    <input type="number" class="quantity-input-field" value="${item.quantity}" 
+                           data-qty-input="${item.id}" min="1">
+                    <button class="quantity-control-btn" data-increase-qty="${item.id}" type="button">+</button>
+                </div>`;
+
+            cartHTML += `
+                <div class="cart-item-row" data-cart-item-id="${item.id}">
+                    <img src="${item.productImage}" alt="${item.productName}" class="cart-item-image">
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.productName}</div>
+                        <div class="cart-item-price">৳${item.productPrice.toFixed(2)} each</div>
+                        ${serviceTimeDisplay}
+                        ${quantityControls}
+                    </div>
+                    <div class="cart-item-actions">
+                        <div class="cart-item-total">৳${itemTotal.toFixed(2)}</div>
+                        <button class="remove-item-btn" data-remove-item="${item.id}" type="button">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        cartItemsList.innerHTML = cartHTML;
+        totalAmount.textContent = total.toFixed(2);
+    }
+
+    openCartModal() {
+        this.updateCartModal();
+        const cartModal = document.getElementById('cartModal');
+        if (cartModal) {
+            const modal = new bootstrap.Modal(cartModal);
+            modal.show();
+            this.modalInstances.cart = modal;
         }
     }
 
-    showToast(message, type = 'success') {
-        const toastHtml = `
-            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-                <div class="d-flex">
-                    <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
-                </div>
-            </div>
-        `;
+    showServiceBookingModal(serviceName) {
+        const serviceNameEl = document.getElementById('selectedServiceName');
+        if (serviceNameEl) {
+            serviceNameEl.textContent = serviceName;
+        }
         
-        document.body.insertAdjacentHTML('beforeend', toastHtml);
-        
-        setTimeout(() => {
-            const toasts = document.querySelectorAll('.toast');
-            if (toasts.length > 0) {
-                toasts[toasts.length - 1].remove();
-            }
-        }, 3000);
+        const serviceModal = document.getElementById('serviceBookingModal');
+        if (serviceModal) {
+            const modal = new bootstrap.Modal(serviceModal);
+            modal.show();
+            this.modalInstances.service = modal;
+        }
     }
 
-    async submitOrder(e) {
+    confirmServiceBooking() {
+        const dateInput = document.getElementById('bookingDate');
+        const timeInput = document.getElementById('bookingTimeSlot');
+        
+        if (!dateInput || !timeInput) {
+            this.showNotification('Booking form not found!', 'error');
+            return;
+        }
+
+        const selectedDate = dateInput.value;
+        const selectedTime = timeInput.value;
+        
+        if (!selectedDate || !selectedTime) {
+            this.showNotification('Please select both date and time!', 'error');
+            return;
+        }
+
+        const serviceDateTime = `${selectedDate} ${selectedTime}:00`;
+        
+        if (this.currentServiceData) {
+            this.addItemToCart(
+                this.currentServiceData.productId,
+                this.currentServiceData.productName,
+                this.currentServiceData.productPrice,
+                this.currentServiceData.productImage,
+                'service',
+                serviceDateTime
+            );
+            
+            // Close modal and reset
+            if (this.modalInstances.service) {
+                this.modalInstances.service.hide();
+            }
+            
+            dateInput.value = '';
+            timeInput.value = '';
+            this.currentServiceData = null;
+        }
+    }
+
+    openOrderForm() {
+        if (this.cart.length === 0) {
+            this.showNotification('Your cart is empty!', 'error');
+            return;
+        }
+
+        this.updateOrderSummary();
+        
+        // Close cart modal
+        if (this.modalInstances.cart) {
+            this.modalInstances.cart.hide();
+        }
+        
+        // Open order form modal
+        const orderModal = document.getElementById('orderFormModal');
+        if (orderModal) {
+            const modal = new bootstrap.Modal(orderModal);
+            modal.show();
+            this.modalInstances.order = modal;
+        }
+    }
+
+    updateOrderSummary() {
+        const summaryEl = document.getElementById('finalOrderSummary');
+        const totalEl = document.getElementById('finalOrderTotal');
+        
+        if (!summaryEl || !totalEl) return;
+
+        let summaryHTML = '';
+        let total = 0;
+
+        this.cart.forEach(item => {
+            const itemTotal = item.productPrice * item.quantity;
+            total += itemTotal;
+
+            const serviceInfo = item.serviceDateTime ? 
+                `<small class="text-muted"> (${new Date(item.serviceDateTime).toLocaleString()})</small>` : '';
+
+            summaryHTML += `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>${item.productName} × ${item.quantity}${serviceInfo}</span>
+                    <span class="fw-bold">৳${itemTotal.toFixed(2)}</span>
+                </div>
+            `;
+        });
+
+        summaryEl.innerHTML = summaryHTML;
+        totalEl.textContent = total.toFixed(2);
+    }
+
+    async submitFinalOrder(e) {
         e.preventDefault();
         
         if (this.cart.length === 0) {
-            this.showToast('Your cart is empty!', 'error');
+            this.showNotification('Cart is empty!', 'error');
             return;
         }
+
+        // Double-check authentication before submitting
+        if (!this.checkUserAuthentication()) {
+            this.showNotification('Session expired. Please login again.', 'error');
+            setTimeout(() => this.redirectToLogin(), 1500);
+            return;
+        }
+
+        const phoneInput = document.getElementById('orderPhoneNumber');
+        const addressInput = document.getElementById('orderShippingAddress');
+        const submitBtn = document.getElementById('finalSubmitOrderBtn');
         
-        const phone = document.getElementById('customerPhone').value;
-        const address = document.getElementById('customerAddress').value;
-        const total = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        if (!phoneInput || !addressInput || !submitBtn) {
+            this.showNotification('Order form elements missing!', 'error');
+            return;
+        }
+
+        const phone = phoneInput.value.trim();
+        const address = addressInput.value.trim();
         
-        const submitBtn = document.getElementById('submitOrderBtn');
+        if (!phone || !address) {
+            this.showNotification('Please fill in all required fields!', 'error');
+            return;
+        }
+
+        // Show loading state
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Placing Order...';
-        
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Order...';
+
         try {
+            const orderData = {
+                phone: phone,
+                shipping_address: address,
+                total_amount: this.cart.reduce((sum, item) => sum + (item.productPrice * item.quantity), 0),
+                cart_items: this.cart
+            };
+
             const response = await fetch('/orders/store', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                 },
-                body: JSON.stringify({
-                    phone: phone,
-                    shipping_address: address,
-                    total_amount: total,
-                    cart_items: this.cart
-                })
+                body: JSON.stringify(orderData)
             });
-            
-            const data = await response.json();
-            
-            if (data.success) {
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Clear cart
                 this.cart = [];
-                this.saveCart();
-                this.updateCartCount();
+                this.saveCartData();
+                this.updateAllCartDisplays();
                 
-                bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
-                bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+                // Close modal
+                if (this.modalInstances.order) {
+                    this.modalInstances.order.hide();
+                }
                 
-                this.showToast('Order placed successfully!', 'success');
-                document.getElementById('orderForm').reset();
+                // Reset form
+                document.getElementById('finalOrderForm').reset();
+                
+                this.showNotification('Order placed successfully! 🎉', 'success');
+                
             } else {
-                this.showToast(data.message || 'Order failed!', 'error');
+                // Handle authentication errors
+                if (result.message && (result.message.includes('unauthenticated') || result.message.includes('login'))) {
+                    this.showNotification('Please login to continue', 'error');
+                    setTimeout(() => this.redirectToLogin(), 1500);
+                } else {
+                    this.showNotification(result.message || 'Order failed!', 'error');
+                }
             }
+
         } catch (error) {
-            console.error('Error:', error);
-            this.showToast('Something went wrong!', 'error');
+            console.error('Order submission error:', error);
+            
+            // Check if it's a network error that might indicate auth issues
+            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                this.showNotification('Session expired. Please login again.', 'error');
+                setTimeout(() => this.redirectToLogin(), 1500);
+            } else {
+                this.showNotification('Network error! Please try again.', 'error');
+            }
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Confirm Order';
+            submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Order';
         }
     }
-}
 
-// Global functions
-function confirmServiceTime() {
-    const serviceDate = document.getElementById('serviceDate').value;
-    const serviceTime = document.getElementById('serviceTime').value;
-    
-    if (!serviceDate || !serviceTime) {
-        alert('Please select both date and time!');
-        return;
+    showCartAnimation() {
+        const cartIcon = document.querySelector('.cart-icon');
+        if (cartIcon) {
+            cartIcon.classList.add('cart-animate');
+            setTimeout(() => cartIcon.classList.remove('cart-animate'), 600);
+        }
     }
-    
-    const serviceDateTime = `${serviceDate} ${serviceTime}:00`;
-    
-    if (window.cart && window.cart.currentServiceItem) {
-        window.cart.addItemToCart(
-            window.cart.currentServiceItem.id,
-            window.cart.currentServiceItem.name,
-            window.cart.currentServiceItem.price,
-            window.cart.currentServiceItem.image,
-            'service',
-            serviceDateTime
-        );
-        
-        window.cart.currentServiceItem = null;
-        bootstrap.Modal.getInstance(document.getElementById('serviceTimeModal')).hide();
-        
-        document.getElementById('serviceDate').value = '';
-        document.getElementById('serviceTime').value = '';
-    }
-}
 
-function showOrderForm() {
-    if (!window.cart || window.cart.cart.length === 0) {
-        return;
-    }
-    
-    const orderSummary = document.getElementById('orderSummary');
-    const orderTotal = document.getElementById('orderTotal');
-    
-    let html = '';
-    let total = 0;
-    
-    window.cart.cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
+    showNotification(message, type = 'success') {
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 'alert-info';
         
-        const serviceTimeText = item.service_time ? 
-            ` (${new Date(item.service_time).toLocaleString()})` : '';
-        
-        html += `
-            <div class="d-flex justify-content-between">
-                <span>${item.name} x ${item.quantity}${serviceTimeText}</span>
-                <span>৳${itemTotal}</span>
+        const notificationHTML = `
+            <div class="alert ${alertClass} alert-dismissible toast-notification" role="alert">
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
             </div>
         `;
-    });
-    
-    orderSummary.innerHTML = html;
-    orderTotal.textContent = total.toFixed(2);
-    
-    bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
-    new bootstrap.Modal(document.getElementById('orderModal')).show();
-}
+        
+        document.body.insertAdjacentHTML('beforeend', notificationHTML);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            const notifications = document.querySelectorAll('.toast-notification');
+            if (notifications.length > 0) {
+                const lastNotification = notifications[notifications.length - 1];
+                lastNotification.classList.add('fade-out');
+                setTimeout(() => lastNotification.remove(), 500);
+            }
+        }, 4000);
+    }
 
-// Initialize cart system
-document.addEventListener('DOMContentLoaded', function() {
-    window.cart = new SimpleCart();
-});
+    // Method to manually set authentication status (useful for debugging)
+    setAuthenticationStatus(isAuthenticated) {
+        window.userAuthenticated = isAuthenticated;
+    }
 
-// Add to cart function for onclick
-function addToCart(productId, productName, productPrice, productImage, categoryType = 'product') {
-    if (window.cart) {
-        window.cart.addToCart(productId, productName, productPrice, productImage, categoryType);
+    // Method to get cart count (useful for external access)
+    getCartCount() {
+        return this.cart.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    // Method to clear cart (useful for logout scenarios)
+    clearCart() {
+        this.cart = [];
+        this.saveCartData();
+        this.updateAllCartDisplays();
+        this.showNotification('Cart cleared', 'info');
     }
 }
+
+// Global functions for compatibility
+function addToCart(productId, productName, productPrice, productImage, categoryType = 'product') {
+    if (window.cartManager) {
+        window.cartManager.addToCart(productId, productName, productPrice, productImage, categoryType);
+    }
+}
+
+// Global function to set authentication status
+function setUserAuthentication(isAuthenticated) {
+    if (window.cartManager) {
+        window.cartManager.setAuthenticationStatus(isAuthenticated);
+    }
+}
+
+// Global function to clear cart on logout
+function clearCartOnLogout() {
+    if (window.cartManager) {
+        window.cartManager.clearCart();
+    }
+}
+
+// Initialize system
+document.addEventListener('DOMContentLoaded', function() {
+    window.cartManager = new ImprovedCartSystem();
+    
+    // Optional: Auto-detect authentication on page load
+    // You can uncomment and modify this based on your Laravel setup
+    /*
+    fetch('/api/check-auth', { 
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        window.userAuthenticated = data.authenticated;
+    })
+    .catch(error => {
+        console.log('Auth check failed:', error);
+        window.userAuthenticated = false;
+    });
+    */
+});
 </script>
