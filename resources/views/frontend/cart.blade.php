@@ -355,10 +355,10 @@
 
 <!-- Updated JavaScript -->
 <script>
-// Enhanced Cart System with Login Check and Hidden Empty Cart
-class ImprovedCartSystem {
+// Complete Cart System - All Features Restored
+class CompletCartSystem {
     constructor() {
-        this.cart = this.loadCartData();
+        this.cart = JSON.parse(localStorage.getItem('shopping_cart')) || [];
         this.currentServiceData = null;
         this.isProcessing = false;
         this.modalInstances = {};
@@ -372,28 +372,6 @@ class ImprovedCartSystem {
         console.log('Cart system initialized with', this.cart.length, 'items');
     }
 
-    loadCartData() {
-        try {
-            const savedCart = localStorage.getItem('improved_cart_data');
-            return savedCart ? JSON.parse(savedCart) : [];
-        } catch (error) {
-            console.error('Error loading cart data:', error);
-            return [];
-        }
-    }
-
-    saveCartData() {
-        try {
-            localStorage.setItem('improved_cart_data', JSON.stringify(this.cart));
-        } catch (error) {
-            console.error('Error saving cart data:', error);
-        }
-    }
-
-    generateUniqueItemId() {
-        return 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
-    }
-
     setDateConstraints() {
         setTimeout(() => {
             const dateInput = document.getElementById('bookingDate');
@@ -404,46 +382,6 @@ class ImprovedCartSystem {
         }, 500);
     }
 
-    // Check if user is authenticated
-    checkUserAuthentication() {
-        // Method 1: Check for authentication meta tag
-        const authMeta = document.querySelector('meta[name="user-authenticated"]');
-        if (authMeta) {
-            return authMeta.getAttribute('content') === 'true';
-        }
-
-        // Method 2: Check for user data in global variables
-        if (typeof window.userAuthenticated !== 'undefined') {
-            return window.userAuthenticated;
-        }
-
-        // Method 3: Check for Laravel's common user variable
-        if (typeof window.Laravel !== 'undefined' && window.Laravel.user) {
-            return true;
-        }
-
-        // Method 4: Check local storage or session storage
-        const authToken = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        if (authToken) {
-            return true;
-        }
-
-        // Default: assume not authenticated
-        return false;
-    }
-
-    // Redirect to login page
-    redirectToLogin() {
-        // You can customize this URL based on your application's routing
-        const loginUrl = '/login';
-        
-        // Store current page for redirect after login
-        sessionStorage.setItem('intended_url', window.location.href);
-        
-        // Redirect to login
-        window.location.href = loginUrl;
-    }
-
     setupEventListeners() {
         // Floating cart click
         const floatingCart = document.getElementById('floatingCart');
@@ -451,30 +389,10 @@ class ImprovedCartSystem {
             floatingCart.addEventListener('click', () => this.openCartModal());
         }
 
-        // Order button click with authentication check
+        // Order button click
         const proceedBtn = document.getElementById('proceedOrderBtn');
         if (proceedBtn) {
-            proceedBtn.addEventListener('click', () => {
-                // Check if user is authenticated
-                if (!this.checkUserAuthentication()) {
-                    this.showNotification('Please login to place your order', 'error');
-                    
-                    // Close cart modal first
-                    if (this.modalInstances.cart) {
-                        this.modalInstances.cart.hide();
-                    }
-                    
-                    // Redirect to login after a short delay
-                    setTimeout(() => {
-                        this.redirectToLogin();
-                    }, 1500);
-                    
-                    return;
-                }
-                
-                // If authenticated, proceed with order
-                this.openOrderForm();
-            });
+            proceedBtn.addEventListener('click', () => this.openOrderForm());
         }
 
         // Service booking confirmation
@@ -493,21 +411,18 @@ class ImprovedCartSystem {
         document.addEventListener('click', (e) => {
             const target = e.target;
             
-            // Quantity increase
             if (target.hasAttribute('data-increase-qty')) {
                 e.preventDefault();
                 const itemId = target.getAttribute('data-increase-qty');
                 this.changeQuantity(itemId, 1);
             }
             
-            // Quantity decrease
             if (target.hasAttribute('data-decrease-qty')) {
                 e.preventDefault();
                 const itemId = target.getAttribute('data-decrease-qty');
                 this.changeQuantity(itemId, -1);
             }
             
-            // Remove item
             if (target.hasAttribute('data-remove-item')) {
                 e.preventDefault();
                 const itemId = target.getAttribute('data-remove-item');
@@ -515,7 +430,6 @@ class ImprovedCartSystem {
             }
         });
 
-        // Quantity input change
         document.addEventListener('input', (e) => {
             if (e.target.hasAttribute('data-qty-input')) {
                 const itemId = e.target.getAttribute('data-qty-input');
@@ -523,6 +437,24 @@ class ImprovedCartSystem {
                 this.setQuantity(itemId, newQty);
             }
         });
+    }
+
+    // Check authentication - RESTORED
+    checkAuth() {
+        const authMeta = document.querySelector('meta[name="user-authenticated"]');
+        if (authMeta && authMeta.getAttribute('content') === 'true') {
+            return true;
+        }
+        
+        if (typeof window.userAuthenticated !== 'undefined') {
+            return window.userAuthenticated === true || window.userAuthenticated === 'true';
+        }
+        
+        if (typeof window.Laravel !== 'undefined' && window.Laravel.user && window.Laravel.user.id) {
+            return true;
+        }
+        
+        return false;
     }
 
     addToCart(productId, productName, productPrice, productImage, categoryType = 'product') {
@@ -550,29 +482,27 @@ class ImprovedCartSystem {
     addItemToCart(productId, productName, productPrice, productImage, categoryType, serviceDateTime = null) {
         let existingItem = null;
         
-        // For products, check existing items
         if (categoryType === 'product') {
             existingItem = this.cart.find(item => 
-                item.productId === productId && item.categoryType === 'product'
+                item.id === productId && item.type === 'product'
             );
         }
 
         if (existingItem) {
             existingItem.quantity += 1;
         } else {
+            // CORRECT STRUCTURE for Laravel
             const newItem = {
-                id: this.generateUniqueItemId(),
-                productId,
-                productName,
-                productPrice: parseFloat(productPrice) || 0,
-                productImage,
-                quantity: 1,
-                categoryType,
-                addedAt: new Date().toISOString()
+                id: productId,           // Laravel expects 'id'
+                name: productName,       // Laravel expects 'name'
+                price: parseFloat(productPrice) || 0, // Laravel expects 'price'
+                image: productImage,     // Laravel expects 'image'
+                quantity: 1,            // Laravel expects 'quantity'
+                type: categoryType      // Laravel expects 'type'
             };
 
             if (serviceDateTime) {
-                newItem.serviceDateTime = serviceDateTime;
+                newItem.service_time = serviceDateTime; // Laravel expects 'service_time'
             }
 
             this.cart.push(newItem);
@@ -580,30 +510,30 @@ class ImprovedCartSystem {
 
         this.saveCartData();
         this.updateAllCartDisplays();
-        this.showCartAnimation();
-        this.showNotification(`${productName} added successfully!`, 'success');
+        this.showCartAnimation(); // RESTORED
+        this.showNotification(`${productName} added to cart!`, 'success');
     }
 
     removeItem(itemId) {
-        // Add removing class for animation
+        // RESTORED: Add removing animation
         const itemElement = document.querySelector(`[data-cart-item-id="${itemId}"]`);
         if (itemElement) {
             itemElement.classList.add('removing');
         }
 
         setTimeout(() => {
-            const itemIndex = this.cart.findIndex(item => item.id === itemId);
+            const itemIndex = this.cart.findIndex(item => item.id == itemId);
             if (itemIndex !== -1) {
                 const removedItem = this.cart.splice(itemIndex, 1)[0];
                 this.saveCartData();
                 this.updateAllCartDisplays();
-                this.showNotification(`${removedItem.productName} removed from cart`, 'info');
+                this.showNotification(`${removedItem.name} removed from cart`, 'info');
             }
-        }, 200);
+        }, 200); // RESTORED: Animation delay
     }
 
     changeQuantity(itemId, change) {
-        const item = this.cart.find(item => item.id === itemId);
+        const item = this.cart.find(item => item.id == itemId);
         if (item) {
             const newQuantity = item.quantity + change;
             if (newQuantity <= 0) {
@@ -622,12 +552,16 @@ class ImprovedCartSystem {
             return;
         }
         
-        const item = this.cart.find(item => item.id === itemId);
+        const item = this.cart.find(item => item.id == itemId);
         if (item) {
             item.quantity = quantity;
             this.saveCartData();
             this.updateAllCartDisplays();
         }
+    }
+
+    saveCartData() {
+        localStorage.setItem('shopping_cart', JSON.stringify(this.cart));
     }
 
     updateAllCartDisplays() {
@@ -636,7 +570,6 @@ class ImprovedCartSystem {
         this.updateFloatingCartVisibility();
     }
 
-    // New method to handle floating cart visibility
     updateFloatingCartVisibility() {
         const floatingCart = document.getElementById('floatingCart');
         if (floatingCart) {
@@ -686,15 +619,15 @@ class ImprovedCartSystem {
         let total = 0;
 
         this.cart.forEach(item => {
-            const itemTotal = item.productPrice * item.quantity;
+            const itemTotal = item.price * item.quantity;
             total += itemTotal;
 
-            const serviceTimeDisplay = item.serviceDateTime ? 
+            const serviceTimeDisplay = item.service_time ? 
                 `<div class="cart-service-time">
-                    <i class="bi bi-calendar-event"></i> ${new Date(item.serviceDateTime).toLocaleString()}
+                    <i class="bi bi-calendar-event"></i> ${new Date(item.service_time).toLocaleString()}
                 </div>` : '';
 
-            const quantityControls = item.categoryType === 'service' ? 
+            const quantityControls = item.type === 'service' ? 
                 `<div class="service-badge">Service Booking</div>` :
                 `<div class="quantity-controls-wrapper">
                     <button class="quantity-control-btn" data-decrease-qty="${item.id}" type="button">-</button>
@@ -705,10 +638,10 @@ class ImprovedCartSystem {
 
             cartHTML += `
                 <div class="cart-item-row" data-cart-item-id="${item.id}">
-                    <img src="${item.productImage}" alt="${item.productName}" class="cart-item-image">
+                    <img src="${item.image}" alt="${item.name}" class="cart-item-image">
                     <div class="cart-item-details">
-                        <div class="cart-item-name">${item.productName}</div>
-                        <div class="cart-item-price">৳${item.productPrice.toFixed(2)} each</div>
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">৳${item.price.toFixed(2)} each</div>
                         ${serviceTimeDisplay}
                         ${quantityControls}
                     </div>
@@ -732,7 +665,7 @@ class ImprovedCartSystem {
         if (cartModal) {
             const modal = new bootstrap.Modal(cartModal);
             modal.show();
-            this.modalInstances.cart = modal;
+            this.modalInstances.cart = modal; // RESTORED: Modal instance tracking
         }
     }
 
@@ -746,7 +679,7 @@ class ImprovedCartSystem {
         if (serviceModal) {
             const modal = new bootstrap.Modal(serviceModal);
             modal.show();
-            this.modalInstances.service = modal;
+            this.modalInstances.service = modal; // RESTORED: Modal instance tracking
         }
     }
 
@@ -779,7 +712,7 @@ class ImprovedCartSystem {
                 serviceDateTime
             );
             
-            // Close modal and reset
+            // RESTORED: Proper modal closing
             if (this.modalInstances.service) {
                 this.modalInstances.service.hide();
             }
@@ -796,14 +729,28 @@ class ImprovedCartSystem {
             return;
         }
 
+        // Check authentication
+        if (!this.checkAuth()) {
+            this.showNotification('Please login to place your order', 'error');
+            
+            // RESTORED: Close cart modal properly
+            if (this.modalInstances.cart) {
+                this.modalInstances.cart.hide();
+            }
+            
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1500);
+            return;
+        }
+
         this.updateOrderSummary();
         
-        // Close cart modal
+        // RESTORED: Proper modal management
         if (this.modalInstances.cart) {
             this.modalInstances.cart.hide();
         }
         
-        // Open order form modal
         const orderModal = document.getElementById('orderFormModal');
         if (orderModal) {
             const modal = new bootstrap.Modal(orderModal);
@@ -822,15 +769,15 @@ class ImprovedCartSystem {
         let total = 0;
 
         this.cart.forEach(item => {
-            const itemTotal = item.productPrice * item.quantity;
+            const itemTotal = item.price * item.quantity;
             total += itemTotal;
 
-            const serviceInfo = item.serviceDateTime ? 
-                `<small class="text-muted"> (${new Date(item.serviceDateTime).toLocaleString()})</small>` : '';
+            const serviceInfo = item.service_time ? 
+                `<small class="text-muted"> (${new Date(item.service_time).toLocaleString()})</small>` : '';
 
             summaryHTML += `
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>${item.productName} × ${item.quantity}${serviceInfo}</span>
+                    <span>${item.name} × ${item.quantity}${serviceInfo}</span>
                     <span class="fw-bold">৳${itemTotal.toFixed(2)}</span>
                 </div>
             `;
@@ -848,22 +795,10 @@ class ImprovedCartSystem {
             return;
         }
 
-        // Double-check authentication before submitting
-        if (!this.checkUserAuthentication()) {
-            this.showNotification('Session expired. Please login again.', 'error');
-            setTimeout(() => this.redirectToLogin(), 1500);
-            return;
-        }
-
         const phoneInput = document.getElementById('orderPhoneNumber');
         const addressInput = document.getElementById('orderShippingAddress');
         const submitBtn = document.getElementById('finalSubmitOrderBtn');
         
-        if (!phoneInput || !addressInput || !submitBtn) {
-            this.showNotification('Order form elements missing!', 'error');
-            return;
-        }
-
         const phone = phoneInput.value.trim();
         const address = addressInput.value.trim();
         
@@ -872,17 +807,20 @@ class ImprovedCartSystem {
             return;
         }
 
-        // Show loading state
+        // Show loading
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Order...';
 
         try {
+            // CORRECT DATA STRUCTURE - Laravel expects this exact structure
             const orderData = {
                 phone: phone,
                 shipping_address: address,
-                total_amount: this.cart.reduce((sum, item) => sum + (item.productPrice * item.quantity), 0),
-                cart_items: this.cart
+                total_amount: this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                cart_items: this.cart // Contains: id, name, price, image, quantity, type, service_time
             };
+
+            console.log('Sending to Laravel:', orderData); // Debug
 
             const response = await fetch('/orders/store', {
                 method: 'POST',
@@ -894,14 +832,15 @@ class ImprovedCartSystem {
             });
 
             const result = await response.json();
+            console.log('Laravel response:', result); // Debug
 
             if (result.success) {
-                // Clear cart
+                // Success - clear cart
                 this.cart = [];
                 this.saveCartData();
                 this.updateAllCartDisplays();
                 
-                // Close modal
+                // RESTORED: Proper modal closing
                 if (this.modalInstances.order) {
                     this.modalInstances.order.hide();
                 }
@@ -909,34 +848,22 @@ class ImprovedCartSystem {
                 // Reset form
                 document.getElementById('finalOrderForm').reset();
                 
-                this.showNotification('Order placed successfully! 🎉', 'success');
+                this.showNotification('Order placed successfully!', 'success');
                 
             } else {
-                // Handle authentication errors
-                if (result.message && (result.message.includes('unauthenticated') || result.message.includes('login'))) {
-                    this.showNotification('Please login to continue', 'error');
-                    setTimeout(() => this.redirectToLogin(), 1500);
-                } else {
-                    this.showNotification(result.message || 'Order failed!', 'error');
-                }
+                this.showNotification(result.message || 'Order failed!', 'error');
             }
 
         } catch (error) {
-            console.error('Order submission error:', error);
-            
-            // Check if it's a network error that might indicate auth issues
-            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-                this.showNotification('Session expired. Please login again.', 'error');
-                setTimeout(() => this.redirectToLogin(), 1500);
-            } else {
-                this.showNotification('Network error! Please try again.', 'error');
-            }
+            console.error('Order error:', error);
+            this.showNotification('Network error! Please try again.', 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Order';
         }
     }
 
+    // RESTORED: Cart animation
     showCartAnimation() {
         const cartIcon = document.querySelector('.cart-icon');
         if (cartIcon) {
@@ -945,6 +872,7 @@ class ImprovedCartSystem {
         }
     }
 
+    // RESTORED: Original toast timing (3 seconds)
     showNotification(message, type = 'success') {
         const alertClass = type === 'success' ? 'alert-success' : 
                           type === 'error' ? 'alert-danger' : 'alert-info';
@@ -958,7 +886,7 @@ class ImprovedCartSystem {
         
         document.body.insertAdjacentHTML('beforeend', notificationHTML);
         
-        // Auto remove after 4 seconds
+        // RESTORED: Original 3 second timing
         setTimeout(() => {
             const notifications = document.querySelectorAll('.toast-notification');
             if (notifications.length > 0) {
@@ -966,71 +894,42 @@ class ImprovedCartSystem {
                 lastNotification.classList.add('fade-out');
                 setTimeout(() => lastNotification.remove(), 500);
             }
-        }, 4000);
+        }, 3000);
     }
 
-    // Method to manually set authentication status (useful for debugging)
-    setAuthenticationStatus(isAuthenticated) {
-        window.userAuthenticated = isAuthenticated;
-    }
-
-    // Method to get cart count (useful for external access)
-    getCartCount() {
-        return this.cart.reduce((sum, item) => sum + item.quantity, 0);
-    }
-
-    // Method to clear cart (useful for logout scenarios)
+    // RESTORED: Clear cart with message
     clearCart() {
         this.cart = [];
         this.saveCartData();
         this.updateAllCartDisplays();
-        this.showNotification('Cart cleared', 'info');
+        this.showNotification('Cart cleared', 'info'); // RESTORED: Success message
+    }
+
+    // RESTORED: Get cart count method
+    getCartCount() {
+        return this.cart.reduce((sum, item) => sum + item.quantity, 0);
     }
 }
 
-// Global functions for compatibility
+// Global functions
 function addToCart(productId, productName, productPrice, productImage, categoryType = 'product') {
     if (window.cartManager) {
         window.cartManager.addToCart(productId, productName, productPrice, productImage, categoryType);
     }
 }
 
-// Global function to set authentication status
-function setUserAuthentication(isAuthenticated) {
-    if (window.cartManager) {
-        window.cartManager.setAuthenticationStatus(isAuthenticated);
-    }
-}
-
-// Global function to clear cart on logout
+// RESTORED: Clear cart on logout with success message
 function clearCartOnLogout() {
     if (window.cartManager) {
-        window.cartManager.clearCart();
+        window.cartManager.clearCart(); // This will show "Cart cleared" message
     }
+    localStorage.removeItem('shopping_cart');
 }
 
-// Initialize system
+// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    window.cartManager = new ImprovedCartSystem();
-    
-    // Optional: Auto-detect authentication on page load
-    // You can uncomment and modify this based on your Laravel setup
-    /*
-    fetch('/api/check-auth', { 
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.userAuthenticated = data.authenticated;
-    })
-    .catch(error => {
-        console.log('Auth check failed:', error);
-        window.userAuthenticated = false;
-    });
-    */
+    window.cartManager = new CompletCartSystem();
+    console.log('Complete cart system initialized. Auth:', window.cartManager.checkAuth());
+    console.log('Current cart items:', window.cartManager.getCartCount());
 });
 </script>
