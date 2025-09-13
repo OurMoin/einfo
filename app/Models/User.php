@@ -6,22 +6,26 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'image',
-        'job_title',
-        'username',
-        'otp',
-        'country_id',
-        'city_id',
-        'area',
-        'category_id',
-        'email_verified', // নতুন field add করা হলো
-        'fcm_token', // নতুন field add করা হলো
-        // অন্যান্য fields...
-    ];
+     
+    protected $guarded = []; 
+
+//     protected $fillable = [
+//     'name',
+//     'email',
+//     'password',
+//     'image',
+//     'job_title',
+//     'username',
+//     'otp',
+//     'country_id',
+//     'city_id',
+//     'area',
+//     'category_id',
+//     'phone_number', // যোগ করো
+//     'service_hr',   // যোগ করো
+//     'email_verified',
+//     'fcm_token',
+// ];
     protected $hidden = [
         'password',
         'remember_token',

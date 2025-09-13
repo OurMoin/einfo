@@ -163,6 +163,76 @@
                     @enderror
                 </div>
 
+
+
+
+
+<!-- Phone Number -->
+                <div class="mb-3">
+                    <label for="phone_number" class="form-label">Phone Number</label>
+                    <input type="text" name="phone_number" id="phone_number" class="form-control @error('phone_number') is-invalid @enderror" value="{{ old('phone_number', auth()->user()->phone_number) }}" placeholder="Enter your phone number">
+                    @error('phone_number')
+                        <div class="text-danger mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <!-- Service Hours -->
+                <div class="mb-3">
+                    <label class="form-label">Service Hours</label>
+                    @php
+                        $serviceHr = auth()->user()->service_hr ? json_decode(auth()->user()->service_hr, true) : [];
+                        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                    @endphp
+                    
+                    @foreach($days as $day)
+                    <div class="row mb-2">
+                        <div class="col-md-2">
+                            <label class="form-label">{{ ucfirst($day) }}</label>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="service_hr[{{ $day }}][status]" class="form-select" onchange="toggleTimeInputs('{{ $day }}')">
+                                <option value="open" {{ isset($serviceHr[$day]) && is_array($serviceHr[$day]) ? 'selected' : '' }}>Open</option>
+                                <option value="closed" {{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'selected' : '' }}>Closed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="{{ $day }}_open_time" style="{{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'display:none' : '' }}">
+                            <input type="time" name="service_hr[{{ $day }}][open]" class="form-control" value="{{ isset($serviceHr[$day]['open']) ? $serviceHr[$day]['open'] : '09:00' }}">
+                        </div>
+                        <div class="col-md-3" id="{{ $day }}_close_time" style="{{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'display:none' : '' }}">
+                            <input type="time" name="service_hr[{{ $day }}][close]" class="form-control" value="{{ isset($serviceHr[$day]['close']) ? $serviceHr[$day]['close'] : '18:00' }}">
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+<script>
+function toggleTimeInputs(day) {
+    const status = document.querySelector(`select[name="service_hr[${day}][status]"]`).value;
+    const openTime = document.getElementById(`${day}_open_time`);
+    const closeTime = document.getElementById(`${day}_close_time`);
+    
+    if (status === 'closed') {
+        openTime.style.display = 'none';
+        closeTime.style.display = 'none';
+    } else {
+        openTime.style.display = 'block';
+        closeTime.style.display = 'block';
+    }
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+                
+
                 <!-- Username -->
                 <div class="mb-3">
     <label for="username" class="form-label">Username</label>

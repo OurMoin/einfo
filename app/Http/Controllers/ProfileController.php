@@ -46,16 +46,35 @@ class ProfileController extends Controller
         $user = $request->user();
         
         // Custom validation since we're handling categories
+// Controller এর update method এ validation এ যোগ করো:
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
             'job_title' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone_number' => ['nullable', 'string', 'max:25'], // নতুন
+            'service_hr' => ['nullable', 'array'], // নতুন
             'country_id' => ['required', 'exists:countries,id'],
             'city_id' => ['required', 'exists:cities,id'],
             'area' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ]);
+
+        // Service hours processing যোগ করো validation এর পরে:
+        if ($request->has('service_hr')) {
+            $serviceHours = [];
+            foreach ($request->service_hr as $day => $data) {
+                if ($data['status'] === 'closed') {
+                    $serviceHours[$day] = 'closed';
+                } else {
+                    $serviceHours[$day] = [
+                        'open' => $data['open'],
+                        'close' => $data['close']
+                    ];
+                }
+            }
+            $validated['service_hr'] = json_encode($serviceHours);
+        }
 
         // Handle job title and category
         $categoryId = null;
