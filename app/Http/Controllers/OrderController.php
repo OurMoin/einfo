@@ -5,6 +5,11 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 class OrderController extends Controller
 {
@@ -84,6 +89,29 @@ class OrderController extends Controller
                 ]);
 
                 \Log::info('Order created with ID: ' . $order->id);
+
+                // NEW: Send browser notification to vendor
+                $vendor = \App\Models\User::find($vendorId);
+                $customer = auth()->user();
+                
+                if ($vendor) {
+                    $this->sendBrowserNotification(
+                        $vendorId,
+                        'New Order Received! 🛍️',
+                        "Order from {$customer->name}. Amount: ৳{$vendorTotal}. Total items: " . count($postIds),
+                        $order->id
+                    );
+                    \Log::info('Browser notification sent to vendor', ['vendor_id' => $vendorId, 'order_id' => $order->id]);
+                }
+
+                // NEW: Send confirmation notification to customer
+                $this->sendBrowserNotification(
+                    auth()->id(),
+                    'Order Placed Successfully! ✅',
+                    "Your order has been placed. Total: ৳{$vendorTotal}. Waiting for vendor confirmation.",
+                    $order->id
+                );
+                \Log::info('Browser notification sent to customer', ['customer_id' => auth()->id(), 'order_id' => $order->id]);
 
                 $createdOrders[] = [
                     'order_id' => $order->id,
@@ -180,11 +208,97 @@ class OrderController extends Controller
             abort(403);
         }
 
+        $oldStatus = $order->status;
         $order->update(['status' => $request->status]);
+
+        // NEW: Send status update notification to customer
+        $customer = \App\Models\User::find($order->user_id);
+        $vendor = auth()->user();
+        
+        if ($customer) {
+            $statusMessages = [
+                'confirmed' => 'Your order has been confirmed by the vendor! 🎉',
+                'processing' => 'Your order is being processed. 📦',
+                'shipped' => 'Your order has been shipped! 🚚',
+                'delivered' => 'Your order has been delivered! ✅',
+                'cancelled' => 'Your order has been cancelled. ❌'
+            ];
+
+            if (isset($statusMessages[$request->status])) {
+                $this->sendBrowserNotification(
+                    $order->user_id,
+                    'Order Status Updated',
+                    $statusMessages[$request->status] . " Order ID: {$order->id}",
+                    $order->id
+                );
+                \Log::info('Status update notification sent', ['customer_id' => $order->user_id, 'order_id' => $order->id, 'status' => $request->status]);
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Order status updated successfully!'
         ]);
     }
+
+   
+
+
+
+
+
+    private function sendBrowserNotification($userId, $title, $body, $orderId = null)
+{
+    try {
+        Log::info('Starting notification process', ['user_id' => $userId]);
+        
+        $user = \App\Models\User::find($userId);
+        
+        if (!$user || !$user->fcm_token) {
+            Log::info('No FCM token found for user', ['user_id' => $userId, 'user_exists' => !!$user]);
+            return false;
+        }
+
+        Log::info('User and token found', ['user_id' => $userId, 'token_length' => strlen($user->fcm_token)]);
+
+        // Initialize Firebase Admin SDK
+        $factory = (new Factory)
+            ->withServiceAccount(storage_path('app/' . env('FIREBASE_CREDENTIALS')));
+        
+        Log::info('Firebase factory created');
+        
+        $messaging = $factory->createMessaging();
+        
+        Log::info('Firebase messaging created');
+
+        // Create message
+        $message = CloudMessage::withTarget('token', $user->fcm_token)
+            ->withNotification(Notification::create($title, $body));
+
+        Log::info('Message created, attempting to send');
+
+        // Send the message
+        $result = $messaging->send($message);
+        
+        Log::info('Firebase messaging response', [
+            'user_id' => $userId,
+            'order_id' => $orderId,
+            'firebase_response' => $result,
+            'token_used' => $user->fcm_token
+        ]);
+        
+        return true;
+
+    } catch (\Exception $e) {
+        Log::error('Firebase notification error', [
+            'user_id' => $userId,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return false;
+    }
+}
+
+
+    
 }

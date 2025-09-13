@@ -286,7 +286,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Handle foreground messages - এই part add করুন যদি না থাকে
+messaging.onMessage((payload) => {
+    console.log('Message received in foreground:', payload);
+    
+    // Show browser notification manually
+    if (Notification.permission === 'granted') {
+        const notification = new Notification(payload.notification.title, {
+            body: payload.notification.body,
+            icon: payload.notification.icon || 'https://einfo.site/logo.png',
+            badge: 'https://einfo.site/logo.png',
+            tag: 'firebase-notification',
+            requireInteraction: true
+        });
+        
+        notification.onclick = function() {
+            window.focus();
+            // Navigate to order page
+            if (payload.data && payload.data.click_action) {
+                window.location.href = payload.data.click_action;
+            }
+            notification.close();
+        };
+    }
+});
 
+messaging.onMessage((payload) => {
+    console.log('Message received in foreground:', payload);
+    // Show notification
+});
 
 </script>
 
