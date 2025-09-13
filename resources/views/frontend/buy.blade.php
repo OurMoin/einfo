@@ -77,14 +77,14 @@
                                                         <div class="flex-grow-1">
                                                             <h6 class="mb-0">{{ $post->name }}</h6>
                                                             <small class="text-muted">
-                                                                Qty: {{ $post->ordered_quantity }} × ৳{{ $post->price }}
+                                                                Qty: {{ $post->ordered_quantity }} × {{ $post->price }}
                                                                 @if($post->service_time)
                                                                     | Service: {{ $post->service_time }}
                                                                 @endif
                                                             </small>
                                                         </div>
                                                         <div class="text-end">
-                                                            <strong>৳{{ $post->price * $post->ordered_quantity }}</strong>
+                                                            <strong>{{ $post->price * $post->ordered_quantity }}</strong>
                                                         </div>
                                                     </div>
                                                 @endforeach
@@ -92,7 +92,7 @@
                                         </div>
                                         <div class="col-md-4 text-end">
                                             <div class="mb-3">
-                                                <h4 class="text-primary mb-0">৳{{ number_format($order->total_amount, 2) }}</h4>
+                                                <h4 class="text-primary mb-0">{{ number_format($order->total_amount, 2) }}</h4>
                                                 <small class="text-muted">Total Amount</small>
                                             </div>
                                             <div class="d-grid gap-2">

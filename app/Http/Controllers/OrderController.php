@@ -97,8 +97,8 @@ class OrderController extends Controller
                 if ($vendor) {
                     $this->sendBrowserNotification(
                         $vendorId,
-                        'New Order Received! 🛍️',
-                        "Order from {$customer->name}. Amount: ৳{$vendorTotal}. Total items: " . count($postIds),
+                        'New Order Received!',
+                        "Order from {$customer->name}. Amount: {$vendorTotal}. Total items: " . count($postIds),
                         $order->id
                     );
                     \Log::info('Browser notification sent to vendor', ['vendor_id' => $vendorId, 'order_id' => $order->id]);
@@ -108,7 +108,7 @@ class OrderController extends Controller
                 $this->sendBrowserNotification(
                     auth()->id(),
                     'Order Placed Successfully! ✅',
-                    "Your order has been placed. Total: ৳{$vendorTotal}. Waiting for vendor confirmation.",
+                    "Your order has been placed. Total: {$vendorTotal}. Waiting for vendor confirmation.",
                     $order->id
                 );
                 \Log::info('Browser notification sent to customer', ['customer_id' => auth()->id(), 'order_id' => $order->id]);

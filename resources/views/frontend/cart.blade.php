@@ -26,7 +26,7 @@
             <div class="modal-footer">
                 <div class="w-100">
                     <div class="d-flex justify-content-between mb-3">
-                        <strong>Total: ৳<span id="cartTotalAmount">0.00</span></strong>
+                        <strong>Total: <span id="cartTotalAmount">0.00</span></strong>
                     </div>
                     <button type="button" class="btn btn-primary w-100" id="proceedOrderBtn">
                         Place Order
@@ -103,7 +103,7 @@
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between">
-                            <strong>Total Amount: ৳<span id="finalOrderTotal">0.00</span></strong>
+                            <strong>Total Amount: <span id="finalOrderTotal">0.00</span></strong>
                         </div>
                     </div>
                 </div>
@@ -641,12 +641,12 @@ class CompletCartSystem {
                     <img src="${item.image}" alt="${item.name}" class="cart-item-image">
                     <div class="cart-item-details">
                         <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-price">৳${item.price.toFixed(2)} each</div>
+                        <div class="cart-item-price">${item.price.toFixed(2)} each</div>
                         ${serviceTimeDisplay}
                         ${quantityControls}
                     </div>
                     <div class="cart-item-actions">
-                        <div class="cart-item-total">৳${itemTotal.toFixed(2)}</div>
+                        <div class="cart-item-total">${itemTotal.toFixed(2)}</div>
                         <button class="remove-item-btn" data-remove-item="${item.id}" type="button">
                             <i class="bi bi-trash"></i> Remove
                         </button>
@@ -778,7 +778,7 @@ class CompletCartSystem {
             summaryHTML += `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span>${item.name} × ${item.quantity}${serviceInfo}</span>
-                    <span class="fw-bold">৳${itemTotal.toFixed(2)}</span>
+                    <span class="fw-bold">${itemTotal.toFixed(2)}</span>
                 </div>
             `;
         });
