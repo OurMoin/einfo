@@ -211,23 +211,38 @@
         });
     }
 
-    // Handle foreground messages
+    // Handle foreground messages - SINGLE HANDLER
     messaging.onMessage((payload) => {
         console.log('Message received in foreground:', payload);
         
-        // Show notification manually if page is active
+        // Show browser notification manually for foreground
         if (Notification.permission === 'granted') {
             const notification = new Notification(payload.notification.title, {
                 body: payload.notification.body,
                 icon: payload.notification.icon || 'https://einfo.site/logo.png',
                 badge: 'https://einfo.site/logo.png',
-                tag: 'firebase-notification'
+                tag: 'firebase-notification',
+                requireInteraction: true,
+                data: {
+                    click_action: payload.notification.click_action || payload.data?.click_action || '/',
+                    order_id: payload.data?.order_id || null
+                }
             });
             
             notification.onclick = function() {
                 window.focus();
                 notification.close();
+                
+                // Navigate to specific page if needed
+                if (notification.data && notification.data.click_action) {
+                    window.location.href = notification.data.click_action;
+                }
             };
+            
+            // Auto close after 8 seconds
+            setTimeout(() => {
+                notification.close();
+            }, 8000);
         }
     });
 
@@ -258,67 +273,32 @@
     window.handleUserLogin = handleUserLogin;
     window.saveTokenToDatabase = saveTokenToDatabase;
 
-
     // Login form submit এর আগে FCM token set করুন
-document.addEventListener('DOMContentLoaded', function() {
-    // Existing notification code...
-    
-    // Login form এ FCM token add করার function
-    function setFcmTokenInForm() {
-        const fcmTokenField = document.getElementById('fcm_token_field');
-        if (fcmTokenField && currentFCMToken) {
-            fcmTokenField.value = currentFCMToken;
-        } else if (fcmTokenField) {
-            // localStorage থেকে নিন
-            const storedToken = localStorage.getItem('fcm_token');
-            if (storedToken) {
-                fcmTokenField.value = storedToken;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Login form এ FCM token add করার function
+        function setFcmTokenInForm() {
+            const fcmTokenField = document.getElementById('fcm_token_field');
+            if (fcmTokenField && currentFCMToken) {
+                fcmTokenField.value = currentFCMToken;
+            } else if (fcmTokenField) {
+                // localStorage থেকে নিন
+                const storedToken = localStorage.getItem('fcm_token');
+                if (storedToken) {
+                    fcmTokenField.value = storedToken;
+                }
             }
         }
-    }
-    
-    // Login form submit এর সময় token set করুন
-    const loginForm = document.querySelector('form[method="POST"]');
-    if (loginForm && loginForm.action.includes('login')) {
-        loginForm.addEventListener('submit', function() {
-            setFcmTokenInForm();
-        });
-    }
-});
-
-// Handle foreground messages - এই part add করুন যদি না থাকে
-messaging.onMessage((payload) => {
-    console.log('Message received in foreground:', payload);
-    
-    // Show browser notification manually
-    if (Notification.permission === 'granted') {
-        const notification = new Notification(payload.notification.title, {
-            body: payload.notification.body,
-            icon: payload.notification.icon || 'https://einfo.site/logo.png',
-            badge: 'https://einfo.site/logo.png',
-            tag: 'firebase-notification',
-            requireInteraction: true
-        });
         
-        notification.onclick = function() {
-            window.focus();
-            // Navigate to order page
-            if (payload.data && payload.data.click_action) {
-                window.location.href = payload.data.click_action;
-            }
-            notification.close();
-        };
-    }
-});
-
-messaging.onMessage((payload) => {
-    console.log('Message received in foreground:', payload);
-    // Show notification
-});
+        // Login form submit এর সময় token set করুন
+        const loginForm = document.querySelector('form[method="POST"]');
+        if (loginForm && loginForm.action.includes('login')) {
+            loginForm.addEventListener('submit', function() {
+                setFcmTokenInForm();
+            });
+        }
+    });
 
 </script>
-
-
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
