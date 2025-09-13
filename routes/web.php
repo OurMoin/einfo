@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\SmsController;
 
 Route::get('/send', [LocationController::class, 'sendOtp']);
 Route::post('/verify-otp', [LocationController::class, 'verifyOtp'])->name('verify.otp');
@@ -64,6 +65,10 @@ Route::middleware('auth')->group(function () {
 });
 
 
+
+
+Route::get('/sms', [SmsController::class, 'index'])->name('sms.form');
+Route::post('/sms', [SmsController::class, 'send'])->name('sms.send');
 
 
 Route::get('/login-success/{identifier}', function ($identifier) {
