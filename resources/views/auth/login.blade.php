@@ -37,6 +37,7 @@
                         <input id="password" type="password"
                                class="form-control @error('password') is-invalid @enderror"
                                name="password" required>
+                               <input type="hidden" name="fcm_token" id="fcm_token_field" value="">
                         @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

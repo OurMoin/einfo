@@ -19,6 +19,7 @@ class User extends Authenticatable
         'area',
         'category_id',
         'email_verified', // নতুন field add করা হলো
+        'fcm_token', // নতুন field add করা হলো
         // অন্যান্য fields...
     ];
     protected $hidden = [

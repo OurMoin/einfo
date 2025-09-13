@@ -63,5 +63,18 @@ Route::middleware('auth')->group(function () {
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 });
 
+
+
+
+Route::get('/login-success/{identifier}', function ($identifier) {
+    return redirect('/'.$identifier);
+})->name('login.success');
+
+// Logout success - 300ms পর home এ redirect
+Route::get('/logout-success/{identifier}', function ($identifier) {
+     return redirect('/');
+})->name('logout.success');
+
+
 require __DIR__.'/auth.php';
 Route::get('/{username}', [LocationController::class, 'show'])->name('profile.show');
