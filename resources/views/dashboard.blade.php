@@ -239,13 +239,19 @@ priceInput.addEventListener('input', toggleSubmit);
                   class="rounded-circle mb-3"
                   alt="Profile Photo"
                   style="width:100px; height:100px; object-fit:cover;">
-               <h4 class="mb-1">{{ $user->name }}</h4>
-               <p class="text-muted mb-2">{{ '@' . $user->username }}</p>
-               @if($user->email)
-               <p class="text-muted"><i class="bi bi-envelope me-1"></i>{{ $user->email }}</p>
-               @endif
-               @if($user->location)
-               <p class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ $user->location }}</p>
+               <h4 class="mb-2">{{ $user->name }}</h4>
+               <!-- <p class="text-muted mb-2">{{ '@' . $user->username }}</p> -->
+                @if($user->category)
+                    <p class="text-muted">
+                        <i class="bi bi-grid me-1"></i>{{ $user->category->category_name }}
+                    </p>
+                @else
+                    <p class="text-muted">
+                        <i class="bi bi-grid me-1"></i>{{ $user->job_title }}
+                    </p>
+                @endif
+               @if($user->area)
+               <p class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ $user->area }}</p>
                @endif
                <!-- Post Count -->
                <div class="row text-center mt-3">
@@ -280,13 +286,20 @@ priceInput.addEventListener('input', toggleSubmit);
                   class="rounded-circle mb-3"
                   alt="Profile Photo"
                   style="width:100px; height:100px; object-fit:cover;">
-               <h4 class="mb-1">{{ $user->name }}</h4>
-               <p class="text-muted mb-2">{{ '@' . $user->username }}</p>
-               @if($user->email)
-               <p class="text-muted"><i class="bi bi-envelope me-1"></i>{{ $user->email }}</p>
-               @endif
-               @if($user->location)
-               <p class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ $user->location }}</p>
+               <h4 class="mb-2">{{ $user->name }}</h4>
+               <!-- <p class="text-muted mb-2">{{ '@' . $user->username }}</p> -->
+               @if($user->category)
+                    <p class="text-muted">
+                        <i class="bi bi-grid me-1"></i>{{ $user->category->category_name }}
+                    </p>
+                @else
+                    <p class="text-muted">
+                        <i class="bi bi-grid me-1"></i>{{ $user->job_title }}
+                    </p>
+                @endif
+
+               @if($user->area)
+               <p class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ $user->area }}</p>
                @endif
                <!-- Post Count -->
                <div class=" text-center mt-3">
