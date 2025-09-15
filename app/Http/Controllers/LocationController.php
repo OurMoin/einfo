@@ -13,6 +13,37 @@ use App\Models\Category;
 
 class LocationController extends Controller
 {
+
+
+
+    public function follow(User $user)
+{
+    $authUser = Auth::user();
+    if ($authUser->id === $user->id) {
+        return response()->json(['error' => 'You cannot follow yourself.']);
+    }
+
+    if (!$authUser->following->contains($user->id)) {
+        $authUser->following()->attach($user->id);
+    }
+
+    return response()->json(['success' => true]);
+}
+
+public function unfollow(User $user)
+{
+    $authUser = Auth::user();
+    if ($authUser->id === $user->id) {
+        return response()->json(['error' => 'You cannot unfollow yourself.']);
+    }
+
+    $authUser->following()->detach($user->id);
+
+    return response()->json(['success' => true]);
+}
+
+
+
     public function show($username)
     {
         // ইউজার খুঁজে বের করো

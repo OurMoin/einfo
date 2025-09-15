@@ -64,6 +64,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 });
 
+Route::middleware('auth')->group(function () {
+    // Follow a user
+    Route::post('/follow/{user}', [LocationController::class, 'follow'])->name('user.follow');
+
+    // Unfollow a user
+    Route::post('/unfollow/{user}', [LocationController::class, 'unfollow'])->name('user.unfollow');
+});
+
+
 
 
 

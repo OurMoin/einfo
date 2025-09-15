@@ -12,6 +12,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <style>
+        @media (max-width: 331px) {
+            .ms-2 {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
     
     <!-- Firebase SDK v8 (Legacy) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
