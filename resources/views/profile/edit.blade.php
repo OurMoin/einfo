@@ -186,19 +186,19 @@
                     
                     @foreach($days as $day)
                     <div class="row mb-2">
-                        <div class="col-md-2">
+                        <div class="col-12">
                             <label class="form-label">{{ ucfirst($day) }}</label>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-4">
                             <select name="service_hr[{{ $day }}][status]" class="form-select" onchange="toggleTimeInputs('{{ $day }}')">
                                 <option value="open" {{ isset($serviceHr[$day]) && is_array($serviceHr[$day]) ? 'selected' : '' }}>Open</option>
                                 <option value="closed" {{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'selected' : '' }}>Closed</option>
                             </select>
                         </div>
-                        <div class="col-md-3" id="{{ $day }}_open_time" style="{{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'display:none' : '' }}">
+                        <div class="col-4" id="{{ $day }}_open_time" style="{{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'display:none' : '' }}">
                             <input type="time" name="service_hr[{{ $day }}][open]" class="form-control" value="{{ isset($serviceHr[$day]['open']) ? $serviceHr[$day]['open'] : '09:00' }}">
                         </div>
-                        <div class="col-md-3" id="{{ $day }}_close_time" style="{{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'display:none' : '' }}">
+                        <div class="col-4" id="{{ $day }}_close_time" style="{{ isset($serviceHr[$day]) && $serviceHr[$day] === 'closed' ? 'display:none' : '' }}">
                             <input type="time" name="service_hr[{{ $day }}][close]" class="form-control" value="{{ isset($serviceHr[$day]['close']) ? $serviceHr[$day]['close'] : '18:00' }}">
                         </div>
                     </div>
@@ -407,7 +407,7 @@ document.addEventListener('click', function(e) {
 
                 <!-- Area -->
                 <div class="mb-3">
-                    <label for="area" class="form-label">Area</label>
+                    <label for="area" class="form-label">Address</label>
                     <input type="text" name="area" id="area" class="form-control @error('area') is-invalid @enderror" value="{{ old('area', auth()->user()->area) }}" placeholder="Enter your area/locality">
                     @error('area')
                         <div class="text-danger mt-1">{{ $message }}</div>

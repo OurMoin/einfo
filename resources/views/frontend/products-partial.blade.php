@@ -57,11 +57,13 @@
               {{ $item->name ? Str::limit($item->name, 20) : 'No Name' }}
            </h5>
         </a>
-                    <small class="price-tag text-success">{{ $item->area ? Str::limit($item->area, 20) : 'No area' }}</small>
+                    <small class="price-tag text-success">{{ $item->area ? Str::limit($item->area, 20) : 'No Address' }}</small>
                     
-                    <span class="badge {{ $isOwnProfile ? 'bg-secondary' : 'bg-primary' }} cart-badge {{ $isOwnProfile ? 'disabled' : '' }}">
+                    <a href="tel:{{ $item->phone_number }}">
+                     <span class="badge {{ $isOwnProfile ? 'bg-secondary' : 'bg-primary' }} cart-badge {{ $isOwnProfile ? 'disabled' : '' }}">
                        <i class="bi bi-telephone"></i>
                     </span>
+                    </a>
                  @else
                     {{-- Regular product/service card layout --}}
                     <h5 class="card-title mb-0">{{ $item->title ? Str::limit($item->title, 20) : 'No Title' }}</h5>
