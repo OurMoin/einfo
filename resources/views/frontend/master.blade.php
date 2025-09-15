@@ -18,6 +18,10 @@
                 margin-left: 0 !important;
             }
         }
+
+        a {
+            text-decoration:none;
+        }
     </style>
     
     <!-- Firebase SDK v8 (Legacy) -->
