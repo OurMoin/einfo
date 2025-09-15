@@ -2,7 +2,7 @@
 
 <div class="">
    <div class="col-12">
-      <div class="card mb-4">
+      <div class="card">
          <div class="card-body text-center">
             <img src="{{ $user->image ? asset('profile-image/'.$user->image) : 'https://cdn-icons-png.flaticon.com/512/219/219983.png' }}"
                class="rounded-circle mb-3"

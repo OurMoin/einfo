@@ -2,10 +2,7 @@
 @section('main-content')
 
 <style>
-   /* Smooth scroll + offset for fixed header */
-html {
-    scroll-behavior: smooth;
-}
+
 
 /* প্রতিটি section এর উপরে offset */
 .grid-section {
