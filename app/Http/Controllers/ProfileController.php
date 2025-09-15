@@ -14,6 +14,66 @@ use App\Models\Category;
 
 class ProfileController extends Controller
 {
+
+    public function getMissingFields($user = null)
+{
+    if (!$user) {
+        $user = auth()->user();
+    }
+    
+    $missingFields = [];
+    $fieldLabels = [
+        'image' => 'Profile Image',
+        'job_title' => 'Job Title',
+        'category_id' => 'Category',
+        'area' => 'Area',
+        'phone_number' => 'Phone Number',
+        'service_hr' => 'Service Hours'
+    ];
+    
+    // Check basic required fields
+    if (empty($user->image)) {
+        $missingFields[] = $fieldLabels['image'];
+    }
+    
+    if (empty($user->area)) {
+        $missingFields[] = $fieldLabels['area'];
+    }
+    
+    if (empty($user->phone_number)) {
+        $missingFields[] = $fieldLabels['phone_number'];
+    }
+    
+    if (empty($user->service_hr)) {
+        $missingFields[] = $fieldLabels['service_hr'];
+    }
+    
+    // Check if either job_title OR category_id exists
+    if (empty($user->job_title) && empty($user->category_id)) {
+        $missingFields[] = $fieldLabels['job_title'] . ' or ' . $fieldLabels['category_id'];
+    }
+    
+    return $missingFields;
+}
+
+// Update existing checkCompleteness method
+public function checkCompleteness(Request $request)
+{
+    $user = auth()->user();
+    $missingFields = $this->getMissingFields($user);
+    $isComplete = empty($missingFields);
+    
+    return response()->json([
+        'isComplete' => $isComplete,
+        'missingFields' => $missingFields,
+        'message' => $isComplete 
+            ? 'Profile is complete' 
+            : 'If you want to create post update your profile first'
+    ]);
+}
+
+
+
     /**
      * Display the user's profile form.
      */

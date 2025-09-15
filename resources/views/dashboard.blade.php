@@ -90,9 +90,190 @@
                <div class="mt-3">
                   @if(Auth::id() === $user->id)
                   {{-- Own Profile - Show Add Post + Message Buttons (Same as Follow + Message) --}}
-                  <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createPostModal">
-                     <i class="bi bi-plus-circle me-1"></i> Add Post
-                  </button>                  
+                  
+                  
+
+
+
+<button type="button" class="btn btn-primary btn-sm" onclick="checkProfileAndOpenModal()" id="addPostBtn">
+    <i class="bi bi-plus-circle me-1"></i> Add Post
+</button>
+
+<script>
+    // Function to show profile incomplete message in any div
+function showProfileIncompleteMessage(targetElementId) {
+    // Get user data
+    const user = window.currentUser || window.userProfile || @json(auth()->user());
+    
+    const missingFields = [];
+    const fieldLabels = {
+        'image': 'Profile Photo',
+        'area': 'Address',
+        'phone_number': 'Phone Number',
+        'service_hr': 'Service Hours',
+        'job_category': 'Job Title or Business Category'
+    };
+
+
+    
+    
+    
+    // Check each required field
+    if (!user.image || user.image.trim() === '') {
+        missingFields.push(fieldLabels.image);
+    }
+    
+    if (!user.area || user.area.trim() === '') {
+        missingFields.push(fieldLabels.area);
+    }
+    
+    if (!user.phone_number || user.phone_number.trim() === '') {
+        missingFields.push(fieldLabels.phone_number);
+    }
+    
+    if (!user.service_hr || user.service_hr.trim() === '') {
+        missingFields.push(fieldLabels.service_hr);
+    }
+    
+    // Check job title or category
+    if ((!user.job_title || user.job_title.trim() === '') && 
+        (!user.category_id || user.category_id === '')) {
+        missingFields.push(fieldLabels.job_category);
+    }
+    
+    // Get target element
+    const targetElement = document.getElementById(targetElementId);
+    
+    if (!targetElement) {
+        console.error(`Element with ID '${targetElementId}' not found`);
+        return;
+    }
+    
+    // Show or hide message based on missing fields
+    if (missingFields.length > 0) {
+        let message = 'If you want to add post please update ';
+        
+        if (missingFields.length === 1) {
+            message += missingFields[0];
+        } else if (missingFields.length === 2) {
+            message += missingFields[0] + ' and ' + missingFields[1];
+        } else {
+            message += missingFields.slice(0, -1).join(', ') + ' and ' + missingFields[missingFields.length - 1];
+        }
+        
+        // Set message in target element
+        targetElement.innerHTML = `
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Profile Incomplete:</strong> ${message}
+        `;
+        targetElement.style.display = 'block';
+        
+        // Add Bootstrap alert classes if not already present
+        if (!targetElement.classList.contains('alert')) {
+            targetElement.className += ' alert alert-info';
+        }
+    } else {
+        // Profile is complete, hide the message
+        targetElement.style.display = 'none';
+    }
+    
+    return missingFields.length === 0; // Return true if complete, false if incomplete
+}
+
+// Alternative: Simple message only (without HTML formatting)
+function showSimpleProfileMessage(targetElementId, customMessage = null) {
+    const user = window.currentUser || window.userProfile || @json(auth()->user());
+    
+    const missingFields = [];
+    
+    // Check required fields
+    if (!user.image) missingFields.push('profile image');
+    if (!user.area) missingFields.push('area');
+    if (!user.phone_number) missingFields.push('phone number');
+    if (!user.service_hr) missingFields.push('service hours');
+    if (!user.job_title && !user.category_id) missingFields.push('job title or category');
+    
+    const targetElement = document.getElementById(targetElementId);
+    
+    if (missingFields.length > 0) {
+        let message = customMessage || 'If you want to add post please update ';
+        
+        if (!customMessage) {
+            if (missingFields.length === 1) {
+                message += missingFields[0];
+            } else if (missingFields.length === 2) {
+                message += missingFields[0] + ' and ' + missingFields[1];
+            } else {
+                message += missingFields.slice(0, -1).join(', ') + ' and ' + missingFields[missingFields.length - 1];
+            }
+        }
+        
+        targetElement.textContent = message;
+        targetElement.style.display = 'block';
+    } else {
+        targetElement.style.display = 'none';
+    }
+    
+    return missingFields.length === 0;
+}
+
+// Usage examples:
+// showProfileIncompleteMessage('myCustomDiv');
+// showSimpleProfileMessage('myMessageArea');
+// showSimpleProfileMessage('warningDiv', 'Complete your profile to continue');
+
+// Auto-run on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Replace 'yourDivId' with your actual div ID
+    // showProfileIncompleteMessage('yourDivId');
+});
+
+
+// 🎯 MINIMAL JAVASCRIPT - Just for button check
+
+// Helper function to check profile completeness
+function isProfileComplete(user) {
+    if (!user) return false;
+    
+    // Check required fields
+    if (!user.image || user.image.trim() === '') return false;
+    if (!user.area || user.area.trim() === '') return false;
+    if (!user.phone_number || user.phone_number.trim() === '') return false;
+    if (!user.service_hr || user.service_hr.trim() === '') return false;
+    
+    // Check job title or category
+    if ((!user.job_title || user.job_title.trim() === '') && 
+        (!user.category_id || user.category_id === '')) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Main button function
+function checkProfileAndOpenModal() {
+    // Method 1: Check if alert div exists and is visible
+    const alertDiv = document.getElementById('missingFieldsAlert');
+    if (alertDiv && window.getComputedStyle(alertDiv).display !== 'none') {
+        // Alert visible = Profile incomplete, go to profile
+        window.location.href = '/profile';
+        return;
+    }
+    
+    // Method 2: Check using user data
+    const user = window.currentUser || @json(auth()->user());
+    if (user && isProfileComplete(user)) {
+        // Profile complete, open modal
+        const modal = new bootstrap.Modal(document.getElementById('createPostModal'));
+        modal.show();
+    } else {
+        // Profile incomplete, go to profile
+        window.location.href = '/profile';
+    }
+}
+
+</script>
+
                   @else
                   {{-- Other's Profile - Show Follow/Message Buttons --}}
                 
@@ -171,6 +352,15 @@ function toggleFollow(userId) {
                 <button class="btn btn-outline-secondary btn-sm ms-2" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-three-dots"></i>
                     </button>
+
+
+                    <!-- Your custom div -->
+<div class="mt-3 mb-0" id="myProfileAlert" style="display: none;" onclick="checkProfileAndOpenModal()"></div>
+
+<script>
+// Show message in your div
+showProfileIncompleteMessage('myProfileAlert');
+</script>
 
                 <div class="dropdown">
                     
@@ -359,6 +549,8 @@ function toggleFollow(userId) {
                      Please <a href="{{ route('register') }}">register</a> or <a href="{{ route('login') }}">login</a> to interact with posts.
                   </div>
 
+                  
+
                 <div class="dropdown">
                     
                     <ul class="dropdown-menu" aria-labelledby="profileDropdown">
@@ -366,6 +558,8 @@ function toggleFollow(userId) {
                         <li>
   <a class="dropdown-item" href="#" onclick="copyProfileLink(event)">Share</a>
 </li>
+
+
 
 <!-- Toast message div -->
 <div id="toast" style="

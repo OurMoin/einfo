@@ -72,7 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/unfollow/{user}', [LocationController::class, 'unfollow'])->name('user.unfollow');
 });
 
-
+// Add this route in your web.php
+Route::get('/check-profile-completeness', [ProfileController::class, 'checkCompleteness'])
+    ->middleware('auth');
 
 
 
