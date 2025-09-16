@@ -49,299 +49,225 @@
    @include('frontend.profile-card')
    @endif
    @endauth
-   
    @guest
    {{-- Include Profile Card Partial for Guest Users --}}
    @include('frontend.profile-card')
    @endguest
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="">
-    @php
-        // Get categories that have posts from this specific user
-        $userPostCategories = \App\Models\Post::where('user_id', $user->id)
-                            ->with('category')
-                            ->get()
-                            ->pluck('category')
-                            ->unique('id')
-                            ->filter(); // Remove null categories
-    @endphp
-
-    
-
-
-
-
-
-
-
-<style>
-.scroll-container {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: #fff;
-    /* border-bottom: 1px solid #e0e0e0; */
-}
-
-.scroll-content {
-    display: flex;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 10px 0;
-    gap: 5px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.scroll-content::-webkit-scrollbar {
-    display: none;
-}
-
-.nav-item-custom {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px 6px 10px;
-    margin-right: 10px;
-    text-decoration: none;
-    color: #333;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    white-space: nowrap;
-    transition: all 0.3s ease;
-    min-width: fit-content;
-}
-
-.nav-item-custom.active {
-    background-color: #c6e0fcff;
-    color: #007bff;
-    border-radius: 8px;
-}
-
-.grid-section {
-    scroll-margin-top: 120px; /* এখানে 80px হচ্ছে header এর height */
-}
-</style>
-
-<div class="scroll-container pt-5 mb-5">
-    <div class="scroll-content">
-        
-       
-        @foreach($userPostCategories as $category)
+   <div class="">
+      @php
+      // Get categories that have posts from this specific user
+      $userPostCategories = \App\Models\Post::where('user_id', $user->id)
+      ->with('category')
+      ->get()
+      ->pluck('category')
+      ->unique('id')
+      ->filter(); // Remove null categories
+      @endphp
+      <style>
+         .scroll-container {
+         position: sticky;
+         top: 0;
+         z-index: 1000;
+         background: #fff;
+         /* border-bottom: 1px solid #e0e0e0; */
+         }
+         .scroll-content {
+         display: flex;
+         overflow-x: auto;
+         white-space: nowrap;
+         padding: 10px 0;
+         gap: 5px;
+         scrollbar-width: none;
+         -ms-overflow-style: none;
+         }
+         .scroll-content::-webkit-scrollbar {
+         display: none;
+         }
+         .nav-item-custom {
+         display: inline-flex;
+         align-items: center;
+         padding: 4px 10px 6px 10px;
+         margin-right: 10px;
+         text-decoration: none;
+         color: #333;
+         border: 1px solid #ddd;
+         border-radius: 8px;
+         white-space: nowrap;
+         transition: all 0.3s ease;
+         min-width: fit-content;
+         }
+         .nav-item-custom.active {
+         background-color: #c6e0fcff;
+         color: #007bff;
+         border-radius: 8px;
+         }
+         .grid-section {
+         scroll-margin-top: 120px; /* এখানে 80px হচ্ছে header এর height */
+         }
+      </style>
+      <div class="scroll-container pt-5 mb-5">
+         <div class="scroll-content">
+            @foreach($userPostCategories as $category)
             <a href="#{{ $category->slug }}" class="nav-item-custom category-link" data-category="{{ $category->id }}" onclick="scrollToCategory('{{ $category->id }}')">
-                <span>{{ $category->category_name }}</span>
+            <span>{{ $category->category_name }}</span>
             </a>
-        @endforeach
-    </div>
-</div>
-
-<script>
-function scrollToCategory(categoryId) {
-    // Remove active class from all category links
-    document.querySelectorAll('.category-link').forEach(link => {
-        link.classList.remove('active');
-    });
-   
-    // Add active class to clicked category
-    const activeLink = document.querySelector(`[data-category="${categoryId}"]`);
-    if (activeLink) {
-        activeLink.classList.add('active');
-        centerActiveLink(activeLink);
-    }
-   
-    // Smooth scroll to category
-    document.getElementById('category-' + categoryId).scrollIntoView({
-        behavior: 'smooth'
-    });
-}
-
-// Function to center the active link in the horizontal scroll container
-function centerActiveLink(activeLink) {
-    const scrollContainer = document.querySelector('.scroll-content');
-    const containerWidth = scrollContainer.clientWidth;
-    const linkLeft = activeLink.offsetLeft;
-    const linkWidth = activeLink.offsetWidth;
-    
-    // Calculate the scroll position to center the link
-    const scrollPosition = linkLeft - (containerWidth / 2) + (linkWidth / 2);
-    
-    // Smooth scroll to center the active link
-    scrollContainer.scrollTo({
-        left: scrollPosition,
-        behavior: 'smooth'
-    });
-}
-
-// Intersection Observer to automatically set active category based on scroll
-const observerOptions = {
-    root: null,
-    rootMargin: '-100px 0px -50% 0px',
-    threshold: 0
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const categoryId = entry.target.id.replace('category-', '');
-           
-            // Remove active class from all
-            document.querySelectorAll('.category-link').forEach(link => {
-                link.classList.remove('active');
-            });
-           
-            // Add active class to current category
-            const activeLink = document.querySelector(`[data-category="${categoryId}"]`);
-            if (activeLink) {
-                activeLink.classList.add('active');
-                // Center the active link in scroll container
-                centerActiveLink(activeLink);
-            }
-        }
-    });
-}, observerOptions);
-
-// Observe all category sections
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('[id^="category-"]').forEach(section => {
-        observer.observe(section);
-    });
-});
-
-function sortBy(type) {
-    console.log('Sorting by:', type);
-    // Add your sorting logic here
-}
-</script>
-
-
-
-
-
-
-
-
-
-
-    
-
-    @foreach($userPostCategories as $category)
-    @php
-        // Get posts for this category by this user
-        $posts = \App\Models\Post::where('user_id', $user->id)
-                    ->where('category_id', $category->id)
-                    ->with(['user', 'category'])
-                    ->latest()
-                    ->get();
-    @endphp
-
-
-    
-   
-    @if($posts->count() > 0)
-    <section class="grid-section mb-4" id="category-{{ $category->id }}">
-
-    
-        <div class="container">
+            @endforeach
+         </div>
+      </div>
+      <script>
+         function scrollToCategory(categoryId) {
+             // Remove active class from all category links
+             document.querySelectorAll('.category-link').forEach(link => {
+                 link.classList.remove('active');
+             });
+            
+             // Add active class to clicked category
+             const activeLink = document.querySelector(`[data-category="${categoryId}"]`);
+             if (activeLink) {
+                 activeLink.classList.add('active');
+                 centerActiveLink(activeLink);
+             }
+            
+             // Smooth scroll to category
+             document.getElementById('category-' + categoryId).scrollIntoView({
+                 behavior: 'smooth'
+             });
+         }
+         
+         // Function to center the active link in the horizontal scroll container
+         function centerActiveLink(activeLink) {
+             const scrollContainer = document.querySelector('.scroll-content');
+             const containerWidth = scrollContainer.clientWidth;
+             const linkLeft = activeLink.offsetLeft;
+             const linkWidth = activeLink.offsetWidth;
+             
+             // Calculate the scroll position to center the link
+             const scrollPosition = linkLeft - (containerWidth / 2) + (linkWidth / 2);
+             
+             // Smooth scroll to center the active link
+             scrollContainer.scrollTo({
+                 left: scrollPosition,
+                 behavior: 'smooth'
+             });
+         }
+         
+         // Intersection Observer to automatically set active category based on scroll
+         const observerOptions = {
+             root: null,
+             rootMargin: '-100px 0px -50% 0px',
+             threshold: 0
+         };
+         
+         const observer = new IntersectionObserver((entries) => {
+             entries.forEach(entry => {
+                 if (entry.isIntersecting) {
+                     const categoryId = entry.target.id.replace('category-', '');
+                    
+                     // Remove active class from all
+                     document.querySelectorAll('.category-link').forEach(link => {
+                         link.classList.remove('active');
+                     });
+                    
+                     // Add active class to current category
+                     const activeLink = document.querySelector(`[data-category="${categoryId}"]`);
+                     if (activeLink) {
+                         activeLink.classList.add('active');
+                         // Center the active link in scroll container
+                         centerActiveLink(activeLink);
+                     }
+                 }
+             });
+         }, observerOptions);
+         
+         // Observe all category sections
+         document.addEventListener('DOMContentLoaded', function() {
+             document.querySelectorAll('[id^="category-"]').forEach(section => {
+                 observer.observe(section);
+             });
+         });
+         
+         function sortBy(type) {
+             console.log('Sorting by:', type);
+             // Add your sorting logic here
+         }
+      </script>
+      @foreach($userPostCategories as $category)
+      @php
+      // Get posts for this category by this user
+      $posts = \App\Models\Post::where('user_id', $user->id)
+      ->where('category_id', $category->id)
+      ->with(['user', 'category'])
+      ->latest()
+      ->get();
+      @endphp
+      @if($posts->count() > 0)
+      <section class="grid-section mb-4" id="category-{{ $category->id }}">
+         <div class="container">
             <!-- Category Title -->
             <div class="row mb-4">
-                <div class="col-12">
-                    <h4 class="fw-bold text-dark">{{ $category->category_name }}</h4>
-                </div>
+               <div class="col-12">
+                  <h4 class="fw-bold text-dark mb-0">{{ $category->category_name }}</h4>
+               </div>
             </div>
-            
             <!-- Posts Section -->
             <div class="row g-3 g-md-4 mb-4" id="posts-container-{{ $category->id }}">
-                @foreach($posts as $item)
-                    @php
-                        $isOwnPost = auth()->check() && auth()->id() == $item->user_id;
-                        $categoryType = $item->category->cat_type ?? 'product';
-                    @endphp
-                    
-                    <div class="col-4">
-                       <div class="card shadow-sm border-0">
-                          @if($item->image)
-                             <img src="{{ asset('uploads/'.$item->image) }}" class="card-img-top" alt="Post Image">
-                          @else
-                             <img src="{{ asset('profile-image/no-image.jpeg') }}" class="card-img-top" alt="No Image">
-                          @endif
-                         
-                          <div class="card-body p-2">
-                             <h5 class="card-title mb-0">{{ $item->title ? Str::limit($item->title, 20) : 'No Title' }}</h5>
-                             <small class="price-tag text-success">{{ $item->price ? number_format($item->price, 2) : 'No price' }}</small>
-                             
-                             <span class="badge {{ $isOwnPost ? 'bg-secondary' : 'bg-primary' }} cart-badge {{ $isOwnPost ? 'disabled' : '' }}"
-                                   @if(!$isOwnPost)
-                                   onclick="addToCart('{{ $item->id }}', '{{ $item->title }}', '{{ $item->price ?? 0 }}', '{{ $item->image ? asset('uploads/'.$item->image) : asset('profile-image/no-image.jpeg') }}', '{{ $categoryType }}')"
-                                   style="cursor: pointer;"
-                                   data-category-type="{{ $categoryType }}"
-                                   @endif>
-                                @if($categoryType == 'service')
-                                   <i class="bi bi-calendar-check"></i>
-                                @else
-                                   <i class="bi bi-cart-plus"></i>
-                                @endif
-                             </span>
-                          </div>
-                       </div>
-                    </div>
-                @endforeach
+               @foreach($posts as $item)
+               @php
+               $isOwnPost = auth()->check() && auth()->id() == $item->user_id;
+               $categoryType = $item->category->cat_type ?? 'product';
+               @endphp
+               <div class="col-4">
+                  <div class="card shadow-sm border-0">
+                     @if($item->image)
+                     <img src="{{ asset('uploads/'.$item->image) }}" class="card-img-top" alt="Post Image">
+                     @else
+                     <img src="{{ asset('profile-image/no-image.jpeg') }}" class="card-img-top" alt="No Image">
+                     @endif
+                     <div class="card-body p-2">
+                        <h5 class="card-title mb-0">{{ $item->title ? Str::limit($item->title, 20) : 'No Title' }}</h5>
+                        <small class="price-tag text-success">{{ $item->price ? number_format($item->price, 2) : 'No price' }}</small>
+                        <span class="badge {{ $isOwnPost ? 'bg-secondary' : 'bg-primary' }} cart-badge {{ $isOwnPost ? 'disabled' : '' }}"
+                        @if(!$isOwnPost)
+                        onclick="addToCart('{{ $item->id }}', '{{ $item->title }}', '{{ $item->price ?? 0 }}', '{{ $item->image ? asset('uploads/'.$item->image) : asset('profile-image/no-image.jpeg') }}', '{{ $categoryType }}')"
+                        style="cursor: pointer;"
+                        data-category-type="{{ $categoryType }}"
+                        @endif>
+                        @if($categoryType == 'service')
+                        <i class="bi bi-calendar-check"></i>
+                        @else
+                        <i class="bi bi-cart-plus"></i>
+                        @endif
+                        </span>
+                     </div>
+                  </div>
+               </div>
+               @endforeach
             </div>
-        </div>
-    </section>
-    @endif
-    @endforeach
-
-    {{-- If user has no posts --}}
-    @if($userPostCategories->count() == 0)
-    <div class="container">
-        <div class="row">
+         </div>
+      </section>
+      @endif
+      @endforeach
+      {{-- If user has no posts --}}
+      @if($userPostCategories->count() == 0)
+      <div class="container">
+         <div class="row">
             <div class="col-12">
                <div class="text-center py-5">
                   <p class="text-muted">{{ $user->name }} has no posts yet!</p>
                </div>
             </div>
-        </div>
-    </div>
-    @endif
+         </div>
+      </div>
+      @endif
+   </div>
+   {{-- Cart JavaScript --}}
+   <script>
+      function addToCart(id, title, price, image, categoryType) {
+          console.log('Adding to cart:', {id, title, price, image, categoryType});
+          alert('Added to cart: ' + title);
+      }
+   </script>
 </div>
-
-{{-- Cart JavaScript --}}
-<script>
-function addToCart(id, title, price, image, categoryType) {
-    console.log('Adding to cart:', {id, title, price, image, categoryType});
-    alert('Added to cart: ' + title);
-}
-</script>
-
-
-
-
-   
-
-
-
-
-
-
-
-
-</div>
-
 {{-- Create Post Modal (Only for Own Profile) --}}
 @auth
 @if(Auth::id() === $user->id)
@@ -419,7 +345,6 @@ function addToCart(id, title, price, image, categoryType) {
 </div>
 @endif
 @endauth
-
 {{-- Modal and Category JavaScript --}}
 <script>
    // Categories data from backend
@@ -535,7 +460,6 @@ function addToCart(id, title, price, image, categoryType) {
        toggleSubmit();
    });
 </script>
-
 {{-- User-specific Posts Loading JavaScript --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>

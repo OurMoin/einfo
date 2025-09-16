@@ -4,6 +4,153 @@
    <div class="col-12">
       <div class="card">
          <div class="card-body text-center">
+            
+
+
+         
+
+
+         @php
+use Carbon\Carbon;
+
+$serviceHours = json_decode($user->service_hr, true) ?? [];
+$days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+
+$todayName = strtolower(now()->setTimezone('Asia/Dhaka')->format('l'));
+$todayData = $serviceHours[$todayName] ?? null;
+
+function readableTime($time) {
+    if(!$time) return '—';
+    return Carbon::createFromFormat('H:i', $time)->format('g:i A');
+}
+
+// Initial Top-right badge
+$isOpen = false;
+$now = now()->setTimezone('Asia/Dhaka');
+if(is_array($todayData) && isset($todayData['open'], $todayData['close'])) {
+    $openTime = Carbon::createFromFormat('H:i', $todayData['open'], 'Asia/Dhaka');
+    $closeTime = Carbon::createFromFormat('H:i', $todayData['close'], 'Asia/Dhaka');
+    if($now->between($openTime, $closeTime)) {
+        $isOpen = true;
+    }
+}
+@endphp
+
+{{-- Top-right Open/Closed badge --}}
+<span id="openStatusBadge" class="badge {{ $isOpen ? 'bg-success' : 'bg-danger' }} position-absolute top-0 end-0 m-2"
+      data-bs-toggle="modal"
+      data-bs-target="#hoursModal-{{ $user->id }}"
+      style="cursor:pointer;">
+    {{ $isOpen ? 'Open now' : 'Closed now' }}
+</span>
+
+{{-- Modal --}}
+<div class="modal fade" id="hoursModal-{{ $user->id }}" tabindex="-1" aria-labelledby="hoursModalLabel-{{ $user->id }}" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="hoursModalLabel-{{ $user->id }}">Opening Hours</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="list-unstyled">
+            @foreach($days as $day)
+                @php
+                    $val = $serviceHours[$day] ?? null;
+                    $highlightToday = ($day === $todayName);
+                @endphp
+                <div class="d-flex justify-content-between py-1" style="{{ $highlightToday ? 'font-weight:bold;' : '' }}">
+                    <strong class="text-capitalize">{{ $day }}</strong>
+                    @if(is_string($val) && strtolower($val)==='closed')
+                        <span class="text-muted">Closed</span>
+                    @elseif(is_array($val) && isset($val['open'], $val['close']))
+                        <span>{{ readableTime($val['open']) }} — {{ readableTime($val['close']) }}</span>
+                    @else
+                        <span class="text-muted">—</span>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+
+        <hr>
+
+        {{-- Today summary with live badge --}}
+        <div id="todaySummary">
+            @php
+                $todayText = '<div class="small text-muted">No data for today</div>';
+                if(isset($serviceHours[$todayName])) {
+                    $t = $serviceHours[$todayName];
+                    if(is_string($t) && strtolower($t)==='closed') {
+                        $todayText = '<div><strong>Today:</strong> Closed <span class="badge bg-danger ms-2">Closed</span></div>';
+                    } elseif(is_array($t) && isset($t['open'], $t['close'])) {
+                        $todayText = "<div><strong>Today:</strong> ".readableTime($t['open'])." — ".readableTime($t['close'])." <span id='todayBadge' class='badge ".(now()->setTimezone('Asia/Dhaka')->between(Carbon::createFromFormat('H:i',$t['open'],'Asia/Dhaka'), Carbon::createFromFormat('H:i',$t['close'],'Asia/Dhaka'))?'bg-success':'bg-danger')." ms-2'>".(now()->setTimezone('Asia/Dhaka')->between(Carbon::createFromFormat('H:i',$t['open'],'Asia/Dhaka'), Carbon::createFromFormat('H:i',$t['close'],'Asia/Dhaka'))?'Open':'Closed')."</span></div>";
+                    }
+                }
+            @endphp
+            {!! $todayText !!}
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{{-- JS for live badge updates --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const serviceHours = @json($serviceHours);
+    const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+    const topBadge = document.getElementById('openStatusBadge');
+    const todayBadge = document.getElementById('todayBadge');
+
+    function parseTime(timeStr) {
+        const [hour, minute] = timeStr.split(':').map(Number);
+        return { hour, minute };
+    }
+
+    function isOpenNow(dayData) {
+        if (!dayData || typeof dayData === 'string' && dayData.toLowerCase() === 'closed') return false;
+        const now = new Date();
+        const { hour: oh, minute: om } = parseTime(dayData.open);
+        const { hour: ch, minute: cm } = parseTime(dayData.close);
+        const openTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), oh, om);
+        const closeTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ch, cm);
+        return now >= openTime && now <= closeTime;
+    }
+
+    function updateBadges() {
+        const todayData = serviceHours[todayName];
+        const open = isOpenNow(todayData);
+
+        // Top-right badge
+        topBadge.textContent = open ? 'Open now' : 'Closed now';
+        topBadge.className = 'badge position-absolute top-0 end-0 m-2 ' + (open ? 'bg-success' : 'bg-danger');
+
+        // Modal today badge
+        if(todayBadge){
+            todayBadge.textContent = open ? 'Open' : 'Closed';
+            todayBadge.className = 'badge ms-2 ' + (open ? 'bg-success' : 'bg-danger');
+        }
+    }
+
+    updateBadges();
+    setInterval(updateBadges, 60000);
+});
+</script>
+
+
+
+         
+
+
             <img src="{{ $user->image ? asset('profile-image/'.$user->image) : 'https://cdn-icons-png.flaticon.com/512/219/219983.png' }}"
                class="rounded-circle mb-3"
                alt="Profile Photo"
@@ -78,6 +225,30 @@
                <button class="btn btn-outline-secondary btn-sm ms-2" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="bi bi-three-dots"></i>
                </button>
+
+               {{-- Dropdown Menu --}}
+               <div class="dropdown position-static">
+                  <ul class="dropdown-menu" aria-labelledby="profileDropdown">
+                     <li>
+                        <a class="dropdown-item" href="#" onclick="copyProfileLink(event)">Share</a>
+                     </li>
+                     @auth
+                        @if(Auth::id() !== $user->id)
+                           <li><a class="dropdown-item" href="#">Report</a></li>
+                           <li><a class="dropdown-item text-danger" href="#">Block</a></li>
+                        @endif
+                     @endauth
+                  </ul>
+               </div>
+
+               <style>
+                .card {
+                    overflow: visible !important;
+                }
+                .dropdown-menu {
+                    z-index: 9999 !important;
+                }
+                </style>
                
                {{-- Show profile incomplete message only for own profile --}}
                @auth
@@ -93,37 +264,29 @@
                </div>
                @endguest
                
-               {{-- Dropdown Menu --}}
-               <div class="dropdown">
-                  <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                     <li>
-                        <a class="dropdown-item" href="#" onclick="copyProfileLink(event)">Share</a>
-                     </li>
-                     @auth
-                        @if(Auth::id() !== $user->id)
-                           <li><a class="dropdown-item" href="#">Report</a></li>
-                           <li><a class="dropdown-item text-danger" href="#">Block</a></li>
-                        @endif
-                     @endauth
-                  </ul>
-               </div>
+               
             </div>
          </div>
       </div>
    </div>
 </div>
 
-{{-- Toast message for copy link --}}
 <div id="toast" style="
    position: fixed;
-   bottom: 20px;
-   right: 20px;
+   bottom: 30px;
+   left: 50%;
+   transform: translateX(-50%);
    background: #333;
    color: #fff;
    padding: 10px 20px;
-   border-radius: 8px;
+   border-radius: 6px;
+   width: 175px;
+   text-align:center;
    display: none;
    z-index: 9999;
+   font-size: 14px;
+   white-space: nowrap; /* এক লাইনে থাকবে */
+   box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 ">
    Profile link copied!
 </div>
