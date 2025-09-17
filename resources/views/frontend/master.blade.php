@@ -104,7 +104,7 @@ html {
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
     <div class="container-fluid d-flex align-items-center">
         <!-- Left: Logo -->
         <a class="navbar-brand" href="/">
