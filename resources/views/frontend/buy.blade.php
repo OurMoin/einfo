@@ -1,7 +1,7 @@
 @extends('frontend.master')
 
 @section('main-content')
-<div class="container-fluid px-2 py-4">
+<div class="container container-fluid px-2 py-4">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,7 +16,7 @@
             @if($orders->count() > 0)
                 <div class="row">
                     @foreach($orders as $order)
-                        <div class="col-12 mb-3">
+                        <div class="col-12 mb-4">
                             <div class="card shadow-sm border-0">
                                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                     <div>
@@ -95,10 +95,7 @@
                                                 <h4 class="text-primary mb-0">{{ number_format($order->total_amount, 2) }}</h4>
                                                 <small class="text-muted">Total Amount</small>
                                             </div>
-                                            <div class="d-grid gap-2">
-                                                <a href="{{ route('orders.show', $order->id) }}" class="btn btn-outline-primary btn-sm">
-                                                    <i class="bi bi-eye me-1"></i>View Details
-                                                </a>
+                                            <div class="d-grid gap-2">                                                
                                                 @if($order->status == 'pending')
                                                     <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ $order->id }})">
                                                         <i class="bi bi-x-circle me-1"></i>Cancel Order

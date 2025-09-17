@@ -104,21 +104,7 @@ class OrderController extends Controller
                     \Log::info('Browser notification sent to vendor', ['vendor_id' => $vendorId, 'order_id' => $order->id]);
                 }
 
-                // NEW: Send confirmation notification to customer
-                $this->sendBrowserNotification(
-                    auth()->id(),
-                    'Order Placed Successfully! ✅',
-                    "Your order has been placed. Total: {$vendorTotal}. Waiting for vendor confirmation.",
-                    $order->id
-                );
-                \Log::info('Browser notification sent to customer', ['customer_id' => auth()->id(), 'order_id' => $order->id]);
-
-                $createdOrders[] = [
-                    'order_id' => $order->id,
-                    'vendor_id' => $vendorId,
-                    'total' => $vendorTotal,
-                    'items_count' => count($postIds)
-                ];
+               
             }
 
             \Log::info('All orders created successfully:', $createdOrders);
@@ -162,7 +148,7 @@ class OrderController extends Controller
     public function sellPage()
     {
         $user = Auth::user();
-        
+        session(['vendor_orders_seen_' . $user->id => now()]);
         // User এর কাছে যে orders এসেছে সেগুলো দেখাবে
         $orders = Order::where('vendor_id', $user->id)
             ->with(['user'])
@@ -170,6 +156,7 @@ class OrderController extends Controller
             ->paginate(10);
 
         return view('frontend.sell', compact('orders'));
+        
     }
 
     public function index()

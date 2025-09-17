@@ -1,7 +1,7 @@
 @extends('frontend.master')
 
 @section('main-content')
-<div class="container-fluid px-2 py-4">
+<div class="container container-fluid px-2 py-4">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -23,12 +23,13 @@
                         <button type="button" class="btn btn-outline-primary" onclick="filterOrders('processing')">Processing</button>
                         <button type="button" class="btn btn-outline-secondary" onclick="filterOrders('shipped')">Shipped</button>
                         <button type="button" class="btn btn-outline-success" onclick="filterOrders('delivered')">Delivered</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="filterOrders('cancelled')">Cancelled</button>
                     </div>
                 </div>
 
                 <div class="row">
                     @foreach($orders as $order)
-                        <div class="col-12 mb-3 order-card" data-status="{{ $order->status }}">
+                        <div class="col-12 mb-4 order-card" data-status="{{ $order->status }}">
                             <div class="card shadow-sm border-0">
                                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                     <div>
@@ -36,15 +37,7 @@
                                         <small class="text-muted">{{ $order->created_at->format('M d, Y - h:i A') }}</small>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <!-- Status Update Dropdown -->
-                                        <select class="form-select form-select-sm" onchange="updateOrderStatus({{ $order->id }}, this.value)" style="width: auto;">
-                                            <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                            <option value="confirmed" {{ $order->status == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                                            <option value="processing" {{ $order->status == 'processing' ? 'selected' : '' }}>Processing</option>
-                                            <option value="shipped" {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped</option>
-                                            <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Delivered</option>
-                                            <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                        </select>
+                                        
                                         
                                         <span class="badge 
                                             @if($order->status == 'pending') bg-warning
@@ -116,12 +109,14 @@
                                                 <small class="text-muted">Total Amount</small>
                                             </div>
                                             <div class="d-grid gap-2">
-                                                <a href="{{ route('orders.show', $order->id) }}" class="btn btn-outline-primary btn-sm">
-                                                    <i class="bi bi-eye me-1"></i>View Details
-                                                </a>
                                                 <a href="tel:{{ $order->phone }}" class="btn btn-outline-success btn-sm">
                                                     <i class="bi bi-telephone me-1"></i>Call Customer
                                                 </a>
+                                                @if($order->status == 'pending')
+                                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ $order->id }})">
+                                                        <i class="bi bi-x-circle me-1"></i>Cancel Order
+                                                    </button>
+                                                @endif                                                
                                                 @if($order->status == 'pending')
                                                     <button class="btn btn-success btn-sm" onclick="updateOrderStatus({{ $order->id }}, 'confirmed')">
                                                         <i class="bi bi-check-circle me-1"></i>Confirm Order

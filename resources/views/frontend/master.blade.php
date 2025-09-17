@@ -123,59 +123,122 @@ html {
                 </button>
             </div> 
         </form>
-        <!-- Right: User / Guest Menu -->
-        <ul class="navbar-nav">
-            @auth
-                <li class="nav-item dropdown">
-                    <a class="nav-link d-flex align-items-center" href="javascript:void(0)" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('profile-image/' . (Auth::user()->image ?? 'default.png')) }}"
-                             class="rounded-circle"
-                             alt="User"
-                             style="width:32px; height:32px; object-fit:cover;">
-                    </a>
-                    <ul class="dropdown-menu position-absolute" aria-labelledby="userDropdown" style="z-index:1050;">
-                        <li><a class="dropdown-item" href="{{ route('dashboard') }}">Profile</a></li>
-                        
-                        @php
-                            $userId = Auth::id();
-                            
-                            $hasPlacedOrders = \App\Models\Order::where('user_id', $userId)->exists();
-                            $hasReceivedOrders = \App\Models\Order::where('vendor_id', $userId)->exists();
-                        @endphp
-                        
-                        @if($hasPlacedOrders)
-                            <li><a class="dropdown-item" href="{{ route('buy') }}">Buy</a></li>
+        <!-- Notification Badge CSS - head section এ add করুন -->
+<style>
+.notification-badge {
+    position: absolute;
+    top: 2px;
+    right: -6px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+@media (min-width: 991px) {
+    .notification-badge {
+    right: 1px;    
+}
+}
+
+
+.dropdown-badge {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+</style>
+
+<!-- Right: User / Guest Menu -->
+<ul class="navbar-nav">
+    @auth
+    @php
+        $userId = Auth::id();
+        $hasPlacedOrders = \App\Models\Order::where('user_id', $userId)->exists();
+        $hasReceivedOrders = \App\Models\Order::where('vendor_id', $userId)->exists();
+        
+        // Check if vendor has visited sell page recently
+        $lastSeenKey = 'vendor_orders_seen_' . $userId;
+        $lastSeen = session($lastSeenKey);
+        
+        // New pending orders count for vendor (only count orders created after last seen)
+        $query = \App\Models\Order::where('vendor_id', $userId)
+            ->where('status', 'pending');
+            
+        if ($lastSeen) {
+            $query->where('created_at', '>', $lastSeen);
+        }
+        
+        $newOrdersCount = $query->count();
+    @endphp
+    
+    <li class="nav-item dropdown">
+        <a class="nav-link d-flex align-items-center position-relative" href="javascript:void(0)" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{{ asset('profile-image/' . (Auth::user()->image ?? 'default.png')) }}"
+                 class="rounded-circle"
+                 alt="User"
+                 style="width:32px; height:32px; object-fit:cover;">
+            
+            @if($newOrdersCount > 0)
+                <span class="notification-badge">{{ $newOrdersCount > 99 ? '99+' : $newOrdersCount }}</span>
+            @endif
+        </a>
+        <ul class="dropdown-menu position-absolute" aria-labelledby="userDropdown" style="z-index:1050;">
+            <li><a class="dropdown-item" href="{{ route('dashboard') }}">Profile</a></li>
+            
+            @if($hasPlacedOrders)
+                <li><a class="dropdown-item" href="{{ route('buy') }}">Buy</a></li>
+            @endif
+            
+            @if($hasReceivedOrders)
+                <li>
+                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('sell') }}">
+                        Sell
+                        @if($newOrdersCount > 0)
+                            <span class="dropdown-badge">{{ $newOrdersCount }}</span>
                         @endif
-                        
-                        @if($hasReceivedOrders)
-                            <li><a class="dropdown-item" href="{{ route('sell') }}">Sell</a></li>
-                        @endif
-                        
-                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Settings</a></li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" onsubmit="clearCartOnLogout()">
-                                @csrf
-                                <button type="submit" class="dropdown-item text-danger">Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-            @endauth
-            @guest
-                <li class="nav-item dropdown">
-                    <a class="nav-link" href="javascript:void(0)" id="guestDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ asset('profile-image/default.png') }}"
-                             class="rounded-circle"
-                             alt="User"
-                             style="width:32px; height:32px; object-fit:cover;">
                     </a>
-                    <ul class="dropdown-menu position-absolute" aria-labelledby="guestDropdown" style="z-index:1050;">
-                        <li><a class="dropdown-item" href="{{ route('login') }}">Login</a></li>
-                        <li><a class="dropdown-item" href="{{ route('register') }}">Signup</a></li>
-                    </ul>
                 </li>
-            @endguest
+            @endif
+            
+            <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Settings</a></li>
+            <li>
+                <form method="POST" action="{{ route('logout') }}" onsubmit="clearCartOnLogout()">
+                    @csrf
+                    <button type="submit" class="dropdown-item text-danger">Logout</button>
+                </form>
+            </li>
         </ul>
+    </li>
+@endauth
+    @guest
+        <li class="nav-item dropdown">
+            <a class="nav-link" href="javascript:void(0)" id="guestDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ asset('profile-image/default.png') }}"
+                     class="rounded-circle"
+                     alt="User"
+                     style="width:32px; height:32px; object-fit:cover;">
+            </a>
+            <ul class="dropdown-menu position-absolute" aria-labelledby="guestDropdown" style="z-index:1050;">
+                <li><a class="dropdown-item" href="{{ route('login') }}">Login</a></li>
+                <li><a class="dropdown-item" href="{{ route('register') }}">Signup</a></li>
+            </ul>
+        </li>
+    @endguest
+</ul>
     </div>
 </nav>
 
