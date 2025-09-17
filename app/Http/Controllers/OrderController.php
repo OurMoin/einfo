@@ -13,6 +13,181 @@ use Kreait\Firebase\Messaging\Notification;
 
 class OrderController extends Controller
 {
+
+
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled',
+        'cancel_reason' => 'nullable|string|max:255'
+    ]);
+
+    $order = Order::findOrFail($id);
+    
+    // Only vendor can update order status
+    if ($order->vendor_id !== auth()->id()) {
+        abort(403);
+    }
+
+    $oldStatus = $order->status;
+    
+    // If vendor is cancelling the order, add the reason to post_ids
+    if ($request->status === 'cancelled' && $request->has('cancel_reason')) {
+        $postIds = $order->post_ids;
+        
+        if (is_array($postIds)) {
+            $updatedPostIds = array_map(function($item) use ($request) {
+                $item['cancel_reason'] = $request->cancel_reason;
+                return $item;
+            }, $postIds);
+        } else {
+            $updatedPostIds = [
+                [
+                    'post_id' => null,
+                    'quantity' => 0,
+                    'cancel_reason' => $request->cancel_reason
+                ]
+            ];
+        }
+        
+        $order->update([
+            'status' => $request->status,
+            'post_ids' => $updatedPostIds
+        ]);
+    } else {
+        // Regular status update
+        $order->update(['status' => $request->status]);
+    }
+
+    // Send status update notification to customer
+    $customer = \App\Models\User::find($order->user_id);
+    $vendor = auth()->user();
+    
+    if ($customer) {
+        $statusMessages = [
+            'confirmed' => 'Your order has been confirmed by the vendor! 🎉',
+            'processing' => 'Your order is being processed. 📦',
+            'shipped' => 'Your order has been shipped! 🚚',
+            'delivered' => 'Your order has been delivered! ✅',
+            'cancelled' => 'Your order has been cancelled. ❌'
+        ];
+
+        if (isset($statusMessages[$request->status])) {
+            $this->sendBrowserNotification(
+                $order->user_id,
+                'Order Status Updated',
+                $statusMessages[$request->status] . " Order ID: {$order->id}",
+                $order->id
+            );
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order status updated successfully!'
+    ]);
+}
+
+public function cancelOrder(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:cancelled',
+        'cancel_reason' => 'required|string|max:255'
+    ]);
+
+    $order = Order::findOrFail($id);
+    
+    // Only customer can cancel their own order and only if it's pending
+    if ($order->user_id !== auth()->id()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized to cancel this order'
+        ], 403);
+    }
+
+    if ($order->status !== 'pending') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Order cannot be cancelled as it is already ' . $order->status
+        ], 400);
+    }
+
+    try {
+        \Log::info('Cancelling order with reason', [
+            'order_id' => $id,
+            'cancel_reason' => $request->cancel_reason,
+            'user_id' => auth()->id()
+        ]);
+
+        // Add cancel reason to each item in post_ids
+        $postIds = $order->post_ids;
+        
+        if (is_array($postIds)) {
+            $updatedPostIds = array_map(function($item) use ($request) {
+                $item['cancel_reason'] = $request->cancel_reason;
+                return $item;
+            }, $postIds);
+        } else {
+            // If post_ids is somehow not an array, create a basic structure
+            $updatedPostIds = [
+                [
+                    'post_id' => null,
+                    'quantity' => 0,
+                    'cancel_reason' => $request->cancel_reason
+                ]
+            ];
+        }
+
+        // Update order status and post_ids with cancel reason
+        $order->update([
+            'status' => 'cancelled',
+            'post_ids' => $updatedPostIds
+        ]);
+
+        // Send notification to vendor about cancellation
+        $vendor = \App\Models\User::find($order->vendor_id);
+        $customer = auth()->user();
+        
+        if ($vendor) {
+            $this->sendBrowserNotification(
+                $order->vendor_id,
+                'Order Cancelled',
+                "Order #{$order->id} cancelled by {$customer->name}. Reason: {$request->cancel_reason}",
+                $order->id
+            );
+            \Log::info('Cancellation notification sent to vendor', [
+                'vendor_id' => $order->vendor_id, 
+                'order_id' => $order->id
+            ]);
+        }
+
+        \Log::info('Order cancelled successfully', [
+            'order_id' => $id,
+            'updated_post_ids' => $updatedPostIds
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelled successfully!',
+            'cancel_reason' => $request->cancel_reason
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Order cancellation failed:', [
+            'order_id' => $id,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to cancel order.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
     public function store(Request $request)
     {
         // Debug: Log incoming request
@@ -182,54 +357,7 @@ class OrderController extends Controller
         return view('orders.show', compact('order'));
     }
 
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled'
-        ]);
-
-        $order = Order::findOrFail($id);
-        
-        // Only vendor can update order status
-        if ($order->vendor_id !== auth()->id()) {
-            abort(403);
-        }
-
-        $oldStatus = $order->status;
-        $order->update(['status' => $request->status]);
-
-        // NEW: Send status update notification to customer
-        $customer = \App\Models\User::find($order->user_id);
-        $vendor = auth()->user();
-        
-        if ($customer) {
-            $statusMessages = [
-                'confirmed' => 'Your order has been confirmed by the vendor! 🎉',
-                'processing' => 'Your order is being processed. 📦',
-                'shipped' => 'Your order has been shipped! 🚚',
-                'delivered' => 'Your order has been delivered! ✅',
-                'cancelled' => 'Your order has been cancelled. ❌'
-            ];
-
-            if (isset($statusMessages[$request->status])) {
-                $this->sendBrowserNotification(
-                    $order->user_id,
-                    'Order Status Updated',
-                    $statusMessages[$request->status] . " Order ID: {$order->id}",
-                    $order->id
-                );
-                \Log::info('Status update notification sent', ['customer_id' => $order->user_id, 'order_id' => $order->id, 'status' => $request->status]);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order status updated successfully!'
-        ]);
-    }
-
    
-
 
 
 

@@ -8,7 +8,7 @@
                 <h3 class="mb-0">
                     <i class="bi bi-shop me-2"></i>My Store Orders
                 </h3>
-                <div class="badge bg-success fs-6">
+                <div class="badge bg-success fs-6" id="orderCount">
                     {{ $orders->total() }} Total Orders
                 </div>
             </div>
@@ -17,13 +17,13 @@
                 <!-- Order Status Filter -->
                 <div class="mb-4">
                     <div class="btn-group" role="group" aria-label="Order Status Filter">
-                        <button type="button" class="btn btn-outline-primary active" onclick="filterOrders('all')">All</button>
-                        <button type="button" class="btn btn-outline-warning" onclick="filterOrders('pending')">Pending</button>
-                        <button type="button" class="btn btn-outline-info" onclick="filterOrders('confirmed')">Confirmed</button>
-                        <button type="button" class="btn btn-outline-primary" onclick="filterOrders('processing')">Processing</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="filterOrders('shipped')">Shipped</button>
-                        <button type="button" class="btn btn-outline-success" onclick="filterOrders('delivered')">Delivered</button>
-                        <button type="button" class="btn btn-outline-danger" onclick="filterOrders('cancelled')">Cancelled</button>
+                        <button type="button" class="btn btn-outline-primary active" onclick="filterOrders('all')" data-count="{{ $orders->total() }}">All</button>
+                        <button type="button" class="btn btn-outline-warning" onclick="filterOrders('pending')" data-count="{{ $orders->where('status', 'pending')->count() }}">Pending</button>
+                        <button type="button" class="btn btn-outline-info" onclick="filterOrders('confirmed')" data-count="{{ $orders->where('status', 'confirmed')->count() }}">Confirmed</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterOrders('processing')" data-count="{{ $orders->where('status', 'processing')->count() }}">Processing</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterOrders('shipped')" data-count="{{ $orders->where('status', 'shipped')->count() }}">Shipped</button>
+                        <button type="button" class="btn btn-outline-success" onclick="filterOrders('delivered')" data-count="{{ $orders->where('status', 'delivered')->count() }}">Delivered</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="filterOrders('cancelled')" data-count="{{ $orders->where('status', 'cancelled')->count() }}">Cancelled</button>
                     </div>
                 </div>
 
@@ -37,8 +37,6 @@
                                         <small class="text-muted">{{ $order->created_at->format('M d, Y - h:i A') }}</small>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        
-                                        
                                         <span class="badge 
                                             @if($order->status == 'pending') bg-warning
                                             @elseif($order->status == 'confirmed') bg-info
@@ -97,15 +95,36 @@
                                                             </small>
                                                         </div>
                                                         <div class="text-end">
-                                                            <strong>{{ $post->price * $post->ordered_quantity }}</strong>
+                                                            <strong>৳{{ $post->price * $post->ordered_quantity }}</strong>
                                                         </div>
                                                     </div>
                                                 @endforeach
                                             </div>
+
+                                            <!-- Show cancellation reason if order is cancelled -->
+                                            @if($order->status == 'cancelled')
+                                                @php
+                                                    $cancelReason = null;
+                                                    if (is_array($order->post_ids)) {
+                                                        foreach($order->post_ids as $item) {
+                                                            if (isset($item['cancel_reason'])) {
+                                                                $cancelReason = $item['cancel_reason'];
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if($cancelReason)
+                                                    <div class="alert alert-danger mt-3">
+                                                        <i class="bi bi-x-circle me-2"></i>
+                                                        <strong>Cancellation Reason:</strong> {{ $cancelReason }}
+                                                    </div>
+                                                @endif
+                                            @endif
                                         </div>
                                         <div class="col-md-4 text-end">
                                             <div class="mb-3">
-                                                <h4 class="text-success mb-0">{{ number_format($order->total_amount, 2) }}</h4>
+                                                <h4 class="text-success mb-0">৳{{ number_format($order->total_amount, 2) }}</h4>
                                                 <small class="text-muted">Total Amount</small>
                                             </div>
                                             <div class="d-grid gap-2">
@@ -113,7 +132,7 @@
                                                     <i class="bi bi-telephone me-1"></i>Call Customer
                                                 </a>
                                                 @if($order->status == 'pending')
-                                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ $order->id }})">
+                                                    <button class="btn btn-outline-danger btn-sm" onclick="showVendorCancelModal({{ $order->id }})">
                                                         <i class="bi bi-x-circle me-1"></i>Cancel Order
                                                     </button>
                                                 @endif                                                
@@ -151,8 +170,53 @@
     </div>
 </div>
 
+<!-- Vendor Cancel Order Modal -->
+<div class="modal fade" id="vendorCancelOrderModal" tabindex="-1" aria-labelledby="vendorCancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vendorCancelOrderModalLabel">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>Cancel Order (Vendor)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Are you sure you want to cancel this order as vendor?
+                </div>
+                <div class="mb-3">
+                    <label for="vendorCancelReason" class="form-label">Cancellation Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="vendorCancelReason" rows="3" 
+                              placeholder="Please provide a reason for cancelling this order..." 
+                              maxlength="255"></textarea>
+                    <div class="form-text">Maximum 255 characters</div>
+                    <div class="invalid-feedback" id="vendorReasonError">
+                        Please provide a cancellation reason.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left me-1"></i>Keep Order
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmVendorCancelOrder()">
+                    <i class="bi bi-x-circle me-1"></i>Cancel Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+let currentOrderId = null;
+
 function updateOrderStatus(orderId, status) {
+    const confirmBtn = event.target;
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Confirming...';
+    confirmBtn.disabled = true;
+
     fetch(`/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
@@ -164,40 +228,118 @@ function updateOrderStatus(orderId, status) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Update the badge color
-            const orderCard = document.querySelector(`[data-status]:has(select option[value="${status}"][selected])`).closest('.order-card');
-            orderCard.setAttribute('data-status', status);
-            
-            // Show success message
-            const toast = document.createElement('div');
-            toast.className = 'toast show position-fixed top-0 end-0 m-3';
-            toast.innerHTML = `
-                <div class="toast-body bg-success text-white">
-                    <i class="bi bi-check-circle me-2"></i>Order status updated successfully!
-                </div>
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-            
-            // Reload page to update badge colors
-            setTimeout(() => location.reload(), 1500);
+            window.location.reload();
         } else {
             alert('Failed to update order status');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
         alert('An error occurred');
+    })
+    .finally(() => {
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    });
+}
+
+function showVendorCancelModal(orderId) {
+    currentOrderId = orderId;
+    document.getElementById('vendorCancelReason').value = '';
+    document.getElementById('vendorCancelReason').classList.remove('is-invalid');
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('vendorCancelOrderModal'));
+    modal.show();
+}
+
+function confirmVendorCancelOrder() {
+    const reason = document.getElementById('vendorCancelReason').value.trim();
+    const reasonInput = document.getElementById('vendorCancelReason');
+    const errorDiv = document.getElementById('vendorReasonError');
+    
+    // Validate reason
+    if (!reason) {
+        reasonInput.classList.add('is-invalid');
+        errorDiv.textContent = 'Please provide a cancellation reason.';
+        return;
+    }
+    
+    if (reason.length > 255) {
+        reasonInput.classList.add('is-invalid');
+        errorDiv.textContent = 'Reason must be less than 255 characters.';
+        return;
+    }
+    
+    reasonInput.classList.remove('is-invalid');
+    
+    // Show loading state
+    const cancelBtn = document.querySelector('#vendorCancelOrderModal .btn-danger');
+    const originalText = cancelBtn.innerHTML;
+    cancelBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Cancelling...';
+    cancelBtn.disabled = true;
+    
+    // Send cancel request (vendor cancellation uses the regular status update)
+    fetch(`/orders/${currentOrderId}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+            status: 'cancelled',
+            cancel_reason: reason + ' -vendor'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Hide modal and reload immediately
+            const modal = bootstrap.Modal.getInstance(document.getElementById('vendorCancelOrderModal'));
+            if (modal) {
+                modal.hide();
+            }
+            window.location.reload();
+        } else {
+            alert('Failed to cancel order: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Failed to cancel order. Please try again.');
+        window.location.reload();
+    })
+    .finally(() => {
+        // Restore button state
+        if (cancelBtn) {
+            cancelBtn.innerHTML = originalText;
+            cancelBtn.disabled = false;
+        }
     });
 }
 
 function filterOrders(status) {
     const orderCards = document.querySelectorAll('.order-card');
     const filterButtons = document.querySelectorAll('.btn-group button');
+    const orderCountBadge = document.getElementById('orderCount');
     
     // Update active button
     filterButtons.forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
+    
+    // Get count from button's data attribute
+    const count = event.target.getAttribute('data-count');
+    
+    // Update the counter
+    if (status === 'all') {
+        orderCountBadge.textContent = `${count} Total Orders`;
+    } else {
+        orderCountBadge.textContent = `${count} ${status.charAt(0).toUpperCase() + status.slice(1)} Orders`;
+    }
     
     // Show/hide orders
     orderCards.forEach(card => {
@@ -208,5 +350,15 @@ function filterOrders(status) {
         }
     });
 }
+
+// Close modal on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('vendorCancelOrderModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+});
 </script>
 @endsection

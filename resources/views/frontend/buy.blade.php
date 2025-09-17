@@ -89,15 +89,36 @@
                                                     </div>
                                                 @endforeach
                                             </div>
+
+                                            <!-- Show cancellation reason if order is cancelled -->
+                                            @if($order->status == 'cancelled')
+                                                @php
+                                                    $cancelReason = null;
+                                                    if (is_array($order->post_ids)) {
+                                                        foreach($order->post_ids as $item) {
+                                                            if (isset($item['cancel_reason'])) {
+                                                                $cancelReason = $item['cancel_reason'];
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if($cancelReason)
+                                                    <div class="alert alert-danger mt-3">
+                                                        <i class="bi bi-x-circle me-2"></i>
+                                                        <strong>Cancellation Reason:</strong> {{ $cancelReason }}
+                                                    </div>
+                                                @endif
+                                            @endif
                                         </div>
                                         <div class="col-md-4 text-end">
                                             <div class="mb-3">
-                                                <h4 class="text-primary mb-0">{{ number_format($order->total_amount, 2) }}</h4>
+                                                <h4 class="text-primary mb-0">৳{{ number_format($order->total_amount, 2) }}</h4>
                                                 <small class="text-muted">Total Amount</small>
                                             </div>
                                             <div class="d-grid gap-2">                                                
                                                 @if($order->status == 'pending')
-                                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ $order->id }})">
+                                                    <button class="btn btn-outline-danger btn-sm" onclick="showCancelModal({{ $order->id }})">
                                                         <i class="bi bi-x-circle me-1"></i>Cancel Order
                                                     </button>
                                                 @endif
@@ -130,30 +151,135 @@
     </div>
 </div>
 
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelOrderModalLabel">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>Cancel Order
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Are you sure you want to cancel this order?
+                </div>
+                <div class="mb-3">
+                    <label for="cancelReason" class="form-label">Cancellation Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="cancelReason" rows="3" 
+                              placeholder="Please provide a reason for cancelling this order..." 
+                              maxlength="255"></textarea>
+                    <div class="form-text">Maximum 255 characters</div>
+                    <div class="invalid-feedback" id="reasonError">
+                        Please provide a cancellation reason.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left me-1"></i>Keep Order
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmCancelOrder()">
+                    <i class="bi bi-x-circle me-1"></i>Cancel Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-function cancelOrder(orderId) {
-    if (confirm('Are you sure you want to cancel this order?')) {
-        fetch(`/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ status: 'cancelled' })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Failed to cancel order');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred');
-        });
-    }
+let currentOrderId = null;
+
+function showCancelModal(orderId) {
+    currentOrderId = orderId;
+    document.getElementById('cancelReason').value = '';
+    document.getElementById('cancelReason').classList.remove('is-invalid');
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+    modal.show();
 }
+
+function confirmCancelOrder() {
+    const reason = document.getElementById('cancelReason').value.trim();
+    const reasonInput = document.getElementById('cancelReason');
+    const errorDiv = document.getElementById('reasonError');
+    
+    // Validate reason
+    if (!reason) {
+        reasonInput.classList.add('is-invalid');
+        errorDiv.textContent = 'Please provide a cancellation reason.';
+        return;
+    }
+    
+    if (reason.length > 255) {
+        reasonInput.classList.add('is-invalid');
+        errorDiv.textContent = 'Reason must be less than 255 characters.';
+        return;
+    }
+    
+    reasonInput.classList.remove('is-invalid');
+    
+    // Show loading state
+    const cancelBtn = document.querySelector('#cancelOrderModal .btn-danger');
+    const originalText = cancelBtn.innerHTML;
+    cancelBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Cancelling...';
+    cancelBtn.disabled = true;
+    
+    // Send cancel request
+    fetch(`/orders/${currentOrderId}/cancel`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+            status: 'cancelled',
+            cancel_reason: reason 
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Hide modal and reload immediately
+            const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal'));
+            if (modal) {
+                modal.hide();
+            }
+            window.location.reload();
+        } else {
+            alert('Failed to cancel order: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Failed to cancel order. Please try again.');
+        window.location.reload();
+    })
+    .finally(() => {
+        // Restore button state
+        if (cancelBtn) {
+            cancelBtn.innerHTML = originalText;
+            cancelBtn.disabled = false;
+        }
+    });
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+});
 </script>
 @endsection
