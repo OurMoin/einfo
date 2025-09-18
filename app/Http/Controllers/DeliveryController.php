@@ -1,8 +1,7 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
+use App\Models\User; // Add this line
 
 class DeliveryController extends Controller
 {
@@ -10,9 +9,10 @@ class DeliveryController extends Controller
     {
         return view('frontend.delivery');
     }
-    
+   
     public function adminIndex()
     {
-        return view('frontend.admin'); // Create this view
+        $users = User::with(['country', 'city', 'category'])->paginate(10);
+        return view('frontend.admin', compact('users'));
     }
 }
