@@ -22,8 +22,9 @@
         a {
             text-decoration:none;
         }
-        body {
+        html, body {
             overflow-x: hidden; /* পুরো পেজে horizontal scrollbar disable */
+            -ms-overflow-x: hidden;
         }
     </style>
 
