@@ -11,8 +11,10 @@ class DeliveryController extends Controller
     }
    
     public function adminIndex()
-    {
-        $users = User::with(['country', 'city', 'category'])->paginate(10);
-        return view('frontend.admin', compact('users'));
-    }
+{
+    $users = User::with(['country', 'city', 'category'])
+                ->latest() // This will order by created_at DESC (newest first)
+                ->paginate(5);
+    return view('frontend.admin', compact('users'));
+}
 }
