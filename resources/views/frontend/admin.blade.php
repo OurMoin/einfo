@@ -1,6 +1,6 @@
 @extends('frontend.master')
 @section('main-content')
-<div class="py-4">
+<div class="py-4 ms-3 me-3">
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered table-striped">
