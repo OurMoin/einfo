@@ -33,7 +33,7 @@
                     }
 
                     .btn-group-wrapper .btn {
-                        font-size: .970rem;
+                        font-size: .975rem;
                     }
 
                 </style>
