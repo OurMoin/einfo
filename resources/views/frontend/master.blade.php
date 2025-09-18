@@ -27,6 +27,25 @@
             -ms-overflow-x: clip;
             width: 100%;
         }
+
+        .btn-group-wrapper {
+                        overflow-x: auto;
+                        white-space: nowrap;
+                        -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
+                        scrollbar-width: none; /* Firefox scrollbar hide */
+                    }
+
+                    .btn-group-wrapper::-webkit-scrollbar {
+                        display: none; /* Chrome, Safari scrollbar hide */
+                    }
+
+                    .btn-group .btn {
+                        flex: 0 0 auto; /* বোতাম গুলো shrink হবে না */
+                    }
+
+                    .btn-group-wrapper .btn {
+                        font-size: .975rem;
+                    }
     </style>
 
     <style>

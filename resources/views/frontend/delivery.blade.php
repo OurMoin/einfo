@@ -17,8 +17,8 @@
             </div>
 
             @if($orders->count() > 0)
-                <!-- Filter Tabs -->
-                <div class="mb-4">
+                
+                <div class="mb-4 btn-group-wrapper">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-outline-primary active" onclick="filterOrders('all')">
                             All Orders
