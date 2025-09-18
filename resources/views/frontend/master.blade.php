@@ -191,43 +191,53 @@ html {
     @endphp
     
     <li class="nav-item dropdown">
-        <a class="nav-link d-flex align-items-center position-relative" href="javascript:void(0)" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="{{ asset('profile-image/' . (Auth::user()->image ?? 'default.png')) }}"
-                 class="rounded-circle"
-                 alt="User"
-                 style="width:32px; height:32px; object-fit:cover;">
-            
-            @if($newOrdersCount > 0)
-                <span class="notification-badge">{{ $newOrdersCount > 99 ? '99+' : $newOrdersCount }}</span>
-            @endif
-        </a>
-        <ul class="dropdown-menu position-absolute" aria-labelledby="userDropdown" style="z-index:1050;">
-            <li><a class="dropdown-item" href="{{ route('dashboard') }}">Profile</a></li>
-            
-            @if($hasPlacedOrders)
-                <li><a class="dropdown-item" href="{{ route('buy') }}">Buy</a></li>
-            @endif
-            
-            @if($hasReceivedOrders)
-                <li>
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('sell') }}">
-                        Sell
-                        @if($newOrdersCount > 0)
-                            <span class="dropdown-badge">{{ $newOrdersCount }}</span>
-                        @endif
-                    </a>
-                </li>
-            @endif
-            
-            <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Settings</a></li>
+    <a class="nav-link d-flex align-items-center position-relative" href="javascript:void(0)" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="{{ asset('profile-image/' . (Auth::user()->image ?? 'default.png')) }}"
+             class="rounded-circle"
+             alt="User"
+             style="width:32px; height:32px; object-fit:cover;">
+        
+        @if($newOrdersCount > 0)
+            <span class="notification-badge">{{ $newOrdersCount > 99 ? '99+' : $newOrdersCount }}</span>
+        @endif
+    </a>
+    <ul class="dropdown-menu position-absolute" aria-labelledby="userDropdown" style="z-index:1050;">
+        <li><a class="dropdown-item" href="{{ route('dashboard') }}">Profile</a></li>
+        
+        @if($hasPlacedOrders)
+            <li><a class="dropdown-item" href="{{ route('buy') }}">Buy</a></li>
+        @endif
+        
+        @if($hasReceivedOrders)
             <li>
-                <form method="POST" action="{{ route('logout') }}" onsubmit="clearCartOnLogout()">
-                    @csrf
-                    <button type="submit" class="dropdown-item text-danger">Logout</button>
-                </form>
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('sell') }}">
+                    Sell
+                    @if($newOrdersCount > 0)
+                        <span class="dropdown-badge">{{ $newOrdersCount }}</span>
+                    @endif
+                </a>
             </li>
-        </ul>
-    </li>
+        @endif
+
+        {{-- Delivery role এর জন্য extra link --}}
+        @if(auth()->check() && auth()->user()->role === 'delivery')
+            <li><a class="dropdown-item" href="{{ route('delivery.page') }}">Delivery</a></li>
+        @endif
+        {{-- Admin role এর জন্য extra link --}}
+        @if(auth()->check() && auth()->user()->role === 'admin')
+            <li><a class="dropdown-item" href="{{ route('admin.page') }}">Admin</a></li>
+        @endif
+        
+        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Settings</a></li>
+        <li>
+            <form method="POST" action="{{ route('logout') }}" onsubmit="clearCartOnLogout()">
+                @csrf
+                <button type="submit" class="dropdown-item text-danger">Logout</button>
+            </form>
+        </li>
+    </ul>
+</li>
+
 @endauth
     @guest
         <li class="nav-item dropdown">

@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SmsController;
+use App\Http\Controllers\DeliveryController;
+
+Route::middleware(['auth', 'role:delivery'])->get('/delivery', [DeliveryController::class, 'deliveryIndex'])
+    ->name('delivery.page');
+    
+Route::middleware(['auth', 'role:admin'])->get('/admin', [DeliveryController::class, 'adminIndex'])
+    ->name('admin.page');
 
 Route::get('/send', [LocationController::class, 'sendOtp']);
 Route::post('/verify-otp', [LocationController::class, 'verifyOtp'])->name('verify.otp');
