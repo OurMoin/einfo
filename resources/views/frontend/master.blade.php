@@ -23,8 +23,9 @@
             text-decoration:none;
         }
         html, body {
-            overflow-x: hidden; /* পুরো পেজে horizontal scrollbar disable */
-            -ms-overflow-x: hidden;
+            overflow-x: clip; /* পুরো পেজে horizontal scrollbar disable */
+            -ms-overflow-x: clip;
+            width: 100%;
         }
     </style>
 
