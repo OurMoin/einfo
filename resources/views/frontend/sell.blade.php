@@ -155,14 +155,21 @@
                                                 <a href="tel:{{ $order->phone }}" class="btn btn-outline-success btn-sm">
                                                     <i class="bi bi-telephone me-1"></i>Call Customer
                                                 </a>
-                                                @if($order->status == 'pending')
+                                                @if(!in_array($order->status, ['cancelled', 'delivered']))
                                                     <button class="btn btn-outline-danger btn-sm" onclick="showVendorCancelModal({{ $order->id }})">
                                                         <i class="bi bi-x-circle me-1"></i>Cancel Order
                                                     </button>
-                                                @endif                                                
+                                                @endif
+                                                
                                                 @if($order->status == 'pending')
                                                     <button class="btn btn-success btn-sm" onclick="updateOrderStatus({{ $order->id }}, 'confirmed')">
                                                         <i class="bi bi-check-circle me-1"></i>Confirm Order
+                                                    </button>
+                                                @endif
+                                                <!-- Processing order এর জন্য "Mark as Shipped" button -->
+                                                @if($order->status == 'processing')
+                                                    <button class="btn btn-info btn-sm" onclick="markAsShipped({{ $order->id }})">
+                                                        <i class="bi bi-truck me-1"></i>Mark as Shipped
                                                     </button>
                                                 @endif
                                             </div>
@@ -233,6 +240,50 @@
 </div>
 
 <script>
+
+function markAsShipped(orderId) {
+    const button = event.target;
+    
+    // Show loading state
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+    button.disabled = true;
+    
+    // Send request
+    fetch(`/orders/${orderId}/mark-shipped`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Reload page
+            window.location.reload();
+        } else {
+            throw new Error(data.message || 'Failed to update order');
+        }
+    })
+    .catch(error => {
+        // Restore button
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        // Show error
+        alert('Failed to mark as shipped. Please try again.');
+        console.error('Error:', error);
+    });
+}
+
+
 let currentOrderId = null;
 
 function updateOrderStatus(orderId, status) {

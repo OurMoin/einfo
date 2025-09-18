@@ -19,7 +19,11 @@ Route::middleware(['auth', 'role:admin'])->get('/admin', [DeliveryController::cl
 Route::middleware(['auth', 'role:delivery'])->group(function () {
     Route::get('/delivery', [OrderController::class, 'deliveryPage'])->name('delivery.page');
     Route::post('/orders/{id}/accept-delivery', [OrderController::class, 'acceptForDelivery'])->name('orders.accept-delivery');
+    Route::post('/orders/{id}/complete-delivery', [OrderController::class, 'completeDelivery'])->name('orders.complete-delivery');
 });
+
+// Vendor route (sell page এ button add করতে হবে shipped করার জন্য)
+Route::post('/orders/{id}/mark-shipped', [OrderController::class, 'markAsShipped'])->name('orders.mark-shipped');
 
 Route::get('/send', [LocationController::class, 'sendOtp']);
 Route::post('/verify-otp', [LocationController::class, 'verifyOtp'])->name('verify.otp');

@@ -6,28 +6,95 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="mb-0">
-                    <i class="bi bi-truck me-2"></i>Delivery Orders
+                    <i class="bi bi-truck me-2"></i>Delivery Dashboard
                 </h3>
-                <div class="badge bg-info fs-6" id="orderCount">
-                    {{ $orders->total() }} Confirmed Orders
+                <div class="badge bg-primary fs-6">
+                    <span id="availableCount">{{ $orders->where('status', 'confirmed')->count() }}</span> Available | 
+                    <span id="myOrdersCount">{{ $orders->where('delivery_person_id', auth()->id())->whereIn('status', ['processing', 'shipped'])->count() }}</span> Active | 
+                    <span id="completedCount">{{ $orders->where('delivery_person_id', auth()->id())->where('status', 'delivered')->count() }}</span> Completed |
+                    <span id="cancelledCount">{{ $orders->where('delivery_person_id', auth()->id())->where('status', 'cancelled')->count() }}</span> Cancelled
                 </div>
             </div>
 
             @if($orders->count() > 0)
+                <!-- Filter Tabs -->
+                <div class="mb-4">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" onclick="filterOrders('all')">
+                            All Orders
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="filterOrders('available')">
+                            Available
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="filterOrders('processing')">
+                            Processing
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="filterOrders('shipped')">
+                            Ready
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterOrders('completed')">
+                            Completed
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="filterOrders('cancelled')">
+                            Cancelled
+                        </button>
+                    </div>
+                </div>
+
                 <div class="row">
                     @foreach($orders as $order)
-                        <div class="col-12 mb-4 order-card" data-order-id="{{ $order->id }}">
+                        <div class="col-12 mb-4 order-card" 
+                             data-order-id="{{ $order->id }}"
+                             data-status="{{ $order->status }}"
+                             data-delivery-person="{{ $order->delivery_person_id }}">
                             <div class="card shadow-sm border-0">
-                                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                                <div class="card-header 
+                                    @if($order->status == 'confirmed') bg-info bg-opacity-10
+                                    @elseif($order->status == 'processing') bg-warning bg-opacity-10
+                                    @elseif($order->status == 'shipped') bg-success bg-opacity-10
+                                    @elseif($order->status == 'delivered') bg-secondary bg-opacity-10
+                                    @elseif($order->status == 'cancelled') bg-danger bg-opacity-10
+                                    @endif
+                                    d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-0">Order #{{ $order->id }}</h6>
                                         <small class="text-muted">{{ $order->created_at->format('M d, Y - h:i A') }}</small>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-info">
-                                            <i class="bi bi-check-circle me-1"></i>Confirmed
-                                        </span>
-                                        <span class="badge bg-success">
+                                        @if($order->status == 'confirmed')
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-clock me-1"></i>Available
+                                            </span>
+                                        @elseif($order->status == 'processing')
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-box me-1"></i>Processing
+                                            </span>
+                                            @if($order->delivery_person_id == auth()->id())
+                                                <span class="badge bg-primary">My Order</span>
+                                            @endif
+                                        @elseif($order->status == 'shipped')
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-truck me-1"></i>Ready to Deliver
+                                            </span>
+                                            @if($order->delivery_person_id == auth()->id())
+                                                <span class="badge bg-primary">My Order</span>
+                                            @endif
+                                        @elseif($order->status == 'delivered')
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Delivered
+                                            </span>
+                                            @if($order->delivery_person_id == auth()->id())
+                                                <span class="badge bg-success">Completed by Me</span>
+                                            @endif
+                                        @elseif($order->status == 'cancelled')
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle-fill me-1"></i>Cancelled
+                                            </span>
+                                            @if($order->delivery_person_id == auth()->id())
+                                                <span class="badge bg-warning text-dark">My Cancelled Order</span>
+                                            @endif
+                                        @endif
+                                        <span class="badge bg-dark">
                                             ৳{{ number_format($order->total_amount, 2) }}
                                         </span>
                                     </div>
@@ -135,17 +202,61 @@
 
                                             <!-- Action Buttons -->
                                             <div class="d-grid gap-2">
-                                                <button class="btn btn-success btn-lg accept-order-btn" 
-                                                        onclick="acceptOrder({{ $order->id }})"
-                                                        data-order-id="{{ $order->id }}">
-                                                    <i class="bi bi-check2-circle me-2"></i>Accept Order
-                                                </button>
-                                                <a href="tel:{{ $order->phone }}" class="btn btn-outline-primary">
-                                                    <i class="bi bi-telephone-fill me-2"></i>Call Customer
-                                                </a>
-                                                <a href="tel:{{ $order->vendor->phone ?? '' }}" class="btn btn-outline-secondary">
-                                                    <i class="bi bi-telephone me-2"></i>Call Vendor
-                                                </a>
+                                                @if($order->status == 'confirmed' && $order->delivery_person_id == null)
+                                                    <!-- Available order - anyone can accept -->
+                                                    <button class="btn btn-success btn-lg accept-order-btn" 
+                                                            onclick="acceptOrder({{ $order->id }})"
+                                                            data-order-id="{{ $order->id }}">
+                                                        <i class="bi bi-check2-circle me-2"></i>Accept Order
+                                                    </button>
+                                                @elseif($order->status == 'processing' && $order->delivery_person_id == auth()->id())
+                                                    <!-- My processing order -->
+                                                    <div class="alert alert-warning text-center mb-2">
+                                                        <i class="bi bi-clock-history me-2"></i>
+                                                        Waiting for vendor to prepare order
+                                                    </div>
+                                                @elseif($order->status == 'shipped' && $order->delivery_person_id == auth()->id())
+                                                    <!-- Ready to deliver - show delivery done button -->
+                                                    <button class="btn btn-success btn-lg delivery-done-btn" 
+                                                            onclick="completeDelivery({{ $order->id }})"
+                                                            data-order-id="{{ $order->id }}">
+                                                        <i class="bi bi-check-circle-fill me-2"></i>Delivery Done
+                                                    </button>
+                                                @elseif($order->status == 'delivered' && $order->delivery_person_id == auth()->id())
+                                                    <!-- Completed order -->
+                                                    <div class="alert alert-success text-center mb-2">
+                                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                                        Order Delivered Successfully
+                                                        @if($order->delivered_at)
+                                                            <br><small>{{ $order->delivered_at->format('M d, Y - h:i A') }}</small>
+                                                        @endif
+                                                    </div>
+                                                @elseif($order->status == 'cancelled' && $order->delivery_person_id == auth()->id())
+                                                    <!-- Cancelled order -->
+                                                    <div class="alert alert-danger text-center mb-2">
+                                                        <i class="bi bi-x-circle-fill me-2"></i>
+                                                        Order Cancelled
+                                                        @if($order->cancellation_reason)
+                                                            <br><small>Reason: {{ $order->cancellation_reason }}</small>
+                                                        @endif
+                                                    </div>
+                                                @elseif($order->delivery_person_id != auth()->id() && $order->delivery_person_id != null)
+                                                    <!-- Someone else's order -->
+                                                    <div class="alert alert-secondary text-center">
+                                                        <i class="bi bi-person-check me-2"></i>
+                                                        Assigned to another delivery person
+                                                    </div>
+                                                @endif
+                                                
+                                                <!-- Common buttons for my orders (not for completed/cancelled) -->
+                                                @if($order->delivery_person_id == auth()->id() && !in_array($order->status, ['delivered', 'cancelled']))
+                                                    <a href="tel:{{ $order->phone }}" class="btn btn-outline-primary">
+                                                        <i class="bi bi-telephone-fill me-2"></i>Call Customer
+                                                    </a>
+                                                    <a href="tel:{{ $order->vendor->phone ?? '' }}" class="btn btn-outline-secondary">
+                                                        <i class="bi bi-telephone me-2"></i>Call Vendor
+                                                    </a>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -164,8 +275,8 @@
                     <div class="mb-3">
                         <i class="bi bi-truck" style="font-size: 4rem; color: #6c757d;"></i>
                     </div>
-                    <h5 class="text-muted">No Confirmed Orders Available</h5>
-                    <p class="text-muted">There are no confirmed orders ready for delivery at this moment.</p>
+                    <h5 class="text-muted">No Orders Available</h5>
+                    <p class="text-muted">There are no orders available at this moment.</p>
                     <button class="btn btn-primary" onclick="location.reload()">
                         <i class="bi bi-arrow-clockwise me-2"></i>Refresh
                     </button>
@@ -185,12 +296,12 @@
         pointer-events: none;
     }
     
-    .accept-order-btn:hover {
+    .accept-order-btn:hover, .delivery-done-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
     
-    .accept-order-btn:disabled {
+    .accept-order-btn:disabled, .delivery-done-btn:disabled {
         cursor: not-allowed;
         opacity: 0.6;
     }
@@ -240,27 +351,11 @@ function acceptOrder(orderId) {
     })
     .then(data => {
         if (data.success) {
-            // Show success message
-            button.innerHTML = '<i class="bi bi-check-circle me-2"></i>Order Accepted!';
-            button.classList.remove('btn-success');
-            button.classList.add('btn-secondary');
-            
-            // Add accepted class to card
-            card.classList.add('accepted');
-            
-            // Show success notification
             showNotification('success', 'Order accepted successfully! The order is now being processed.');
-            
-            // Remove the card after 2 seconds
+            // Reload page to refresh the list
             setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.transform = 'translateX(100%)';
-                card.style.opacity = '0';
-                setTimeout(() => {
-                    card.remove();
-                    updateOrderCount();
-                }, 500);
-            }, 2000);
+                window.location.reload();
+            }, 1500);
         } else {
             throw new Error(data.message || 'Failed to accept order');
         }
@@ -275,10 +370,108 @@ function acceptOrder(orderId) {
     });
 }
 
-function updateOrderCount() {
-    const orderCards = document.querySelectorAll('.order-card:not(.accepted)');
-    const orderCountBadge = document.getElementById('orderCount');
-    orderCountBadge.textContent = `${orderCards.length} Confirmed Orders`;
+function completeDelivery(orderId) {
+    const button = event.target;
+    
+    // Confirmation dialog
+    if (!confirm('Have you delivered this order to the customer?')) {
+        return;
+    }
+    
+    // Show loading state
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Completing...';
+    button.disabled = true;
+    
+    // Send request to complete delivery
+    fetch(`/orders/${orderId}/complete-delivery`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('success', 'Order delivered successfully!');
+            // Reload page after a short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Failed to complete delivery');
+        }
+    })
+    .catch(error => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        // Show error message
+        showNotification('error', error.message || 'Failed to complete delivery. Please try again.');
+    });
+}
+
+function filterOrders(filter) {
+    const orderCards = document.querySelectorAll('.order-card');
+    const filterButtons = document.querySelectorAll('.btn-group button');
+    const currentUserId = {{ auth()->id() }};
+    
+    // Update active button
+    filterButtons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Show/hide orders
+    orderCards.forEach(card => {
+        const status = card.getAttribute('data-status');
+        const deliveryPersonId = parseInt(card.getAttribute('data-delivery-person') || 0);
+        
+        if (filter === 'all') {
+            card.style.display = 'block';
+        } else if (filter === 'available') {
+            // Show only confirmed orders without delivery person
+            if (status === 'confirmed' && deliveryPersonId === 0) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        } else if (filter === 'processing') {
+            // Show only my processing orders
+            if (status === 'processing' && deliveryPersonId === currentUserId) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        } else if (filter === 'shipped') {
+            // Show only my shipped orders
+            if (status === 'shipped' && deliveryPersonId === currentUserId) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        } else if (filter === 'completed') {
+            // Show only my delivered orders
+            if (status === 'delivered' && deliveryPersonId === currentUserId) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        } else if (filter === 'cancelled') {
+            // Show only my cancelled orders
+            if (status === 'cancelled' && deliveryPersonId === currentUserId) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
 }
 
 function showNotification(type, message) {
@@ -302,9 +495,10 @@ function showNotification(type, message) {
     }, 3000);
 }
 
-// Auto-refresh page every 30 seconds to check for new orders
+// Auto-refresh page every 30 seconds to check for new orders (skip for completed and cancelled tab)
 setInterval(() => {
-    if (document.querySelectorAll('.order-card:not(.accepted)').length === 0) {
+    const activeButton = document.querySelector('.btn-group button.active');
+    if (activeButton && activeButton.textContent.trim() !== 'Completed' && activeButton.textContent.trim() !== 'Cancelled') {
         location.reload();
     }
 }, 30000);

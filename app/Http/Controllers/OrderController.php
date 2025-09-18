@@ -17,15 +17,23 @@ class OrderController extends Controller
 
 
 
+// OrderController.php এ এই methods update করুন:
 
-
-// OrderController.php এ এই methods add করুন:
-
-// Delivery page দেখানোর জন্য
 public function deliveryPage()
 {
-    // Only confirmed orders দেখাবে delivery personnel কে
-    $orders = Order::where('status', 'confirmed')
+    $userId = auth()->id();
+    
+    // Query build করি - এখন delivered এবং cancelled orders ও include করব
+    $orders = Order::where(function($query) use ($userId) {
+            // Confirmed orders যেগুলো কেউ accept করেনি (সবাই দেখবে)
+            $query->where('status', 'confirmed')
+                  ->whereNull('delivery_person_id');
+        })
+        ->orWhere(function($query) use ($userId) {
+            // অথবা যে orders এই delivery person accept করেছে (processing/shipped/delivered/cancelled)
+            $query->where('delivery_person_id', $userId)
+                  ->whereIn('status', ['processing', 'shipped', 'delivered', 'cancelled']);
+        })
         ->with(['user', 'vendor'])
         ->latest()
         ->paginate(10);
@@ -33,24 +41,31 @@ public function deliveryPage()
     return view('frontend.delivery', compact('orders'));
 }
 
-// Delivery person যখন order accept করবে
 public function acceptForDelivery(Request $request, $id)
 {
     $order = Order::findOrFail($id);
     
-    // Check if order is confirmed
+    // Check if order is confirmed and not taken by someone else
     if ($order->status !== 'confirmed') {
         return response()->json([
             'success' => false,
-            'message' => 'Only confirmed orders can be accepted for delivery'
+            'message' => 'This order is not available for acceptance'
+        ], 400);
+    }
+    
+    // Check if already taken
+    if ($order->delivery_person_id !== null) {
+        return response()->json([
+            'success' => false,
+            'message' => 'This order has already been accepted by another delivery person'
         ], 400);
     }
 
     try {
-        // Update order status to processing
+        // Update order status to processing and assign delivery person
         $order->update([
             'status' => 'processing',
-            'delivery_person_id' => auth()->id() // optional: যদি track করতে চান কে delivery করছে
+            'delivery_person_id' => auth()->id()
         ]);
 
         // Send notification to customer
@@ -61,7 +76,7 @@ public function acceptForDelivery(Request $request, $id)
             $this->sendBrowserNotification(
                 $order->user_id,
                 'Order Being Processed!',
-                "Your order #$order->id has been picked up for delivery and is being processed! 📦",
+                "Your order #$order->id has been picked up for delivery by {$deliveryPerson->name}! 📦",
                 $order->id
             );
         }
@@ -102,9 +117,101 @@ public function acceptForDelivery(Request $request, $id)
     }
 }
 
+// Mark as shipped (vendor করবে product ready হলে)
+public function markAsShipped(Request $request, $id)
+{
+    $order = Order::findOrFail($id);
+    
+    // Only vendor can mark as shipped
+    if ($order->vendor_id !== auth()->id()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized'
+        ], 403);
+    }
 
+    if ($order->status !== 'processing') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only processing orders can be marked as shipped'
+        ], 400);
+    }
 
+    $order->update(['status' => 'shipped']);
 
+    // Notify delivery person
+    if ($order->delivery_person_id) {
+        $this->sendBrowserNotification(
+            $order->delivery_person_id,
+            'Order Ready for Delivery',
+            "Order #$order->id is ready for delivery! Please deliver to customer.",
+            $order->id
+        );
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order marked as shipped!'
+    ]);
+}
+
+// Complete delivery
+public function completeDelivery(Request $request, $id)
+{
+    $order = Order::findOrFail($id);
+    
+    // Only assigned delivery person can complete
+    if ($order->delivery_person_id !== auth()->id()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You are not assigned to this order'
+        ], 403);
+    }
+
+    if ($order->status !== 'shipped') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only shipped orders can be marked as delivered'
+        ], 400);
+    }
+
+    $order->update([
+        'status' => 'delivered'
+    ]);
+
+    // Notify customer
+    $customer = \App\Models\User::find($order->user_id);
+    if ($customer) {
+        $this->sendBrowserNotification(
+            $order->user_id,
+            'Order Delivered!',
+            "Your order #$order->id has been successfully delivered! Thank you for shopping with us! ✅",
+            $order->id
+        );
+    }
+
+    // Notify vendor
+    $vendor = \App\Models\User::find($order->vendor_id);
+    if ($vendor) {
+        $this->sendBrowserNotification(
+            $order->vendor_id,
+            'Order Delivered',
+            "Order #$order->id has been successfully delivered to the customer.",
+            $order->id
+        );
+    }
+
+    \Log::info('Order delivered successfully', [
+        'order_id' => $order->id,
+        'delivery_person' => auth()->id(),
+        'delivered_at' => now()
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order marked as delivered successfully!'
+    ]);
+}
 
 
 
