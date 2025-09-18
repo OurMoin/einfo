@@ -78,17 +78,21 @@
                                                 <h6>Ordered Items ({{ count($order->post_ids) }} products):</h6>
                                                 @foreach($order->getOrderedPostsWithDetails() as $post)
                                                     <div class="d-flex align-items-center mb-2 p-2 border rounded">
-                                                        @if($post->images && count(json_decode($post->images)) > 0)
-                                                            @php $images = json_decode($post->images); @endphp
-                                                            <img src="{{ asset('post-images/' . $images[0]) }}" 
-                                                                 alt="Product" class="me-3 rounded" 
-                                                                 style="width: 50px; height: 50px; object-fit: cover;">
-                                                        @else
-                                                            <div class="bg-light me-3 rounded d-flex align-items-center justify-content-center" 
-                                                                 style="width: 50px; height: 50px;">
-                                                                <i class="bi bi-image text-muted"></i>
-                                                            </div>
-                                                        @endif
+        @php
+            $images = $post->images ? json_decode($post->images, true) : [];
+            $postImage = $post->image ?? ($images[0] ?? null);
+        @endphp
+
+        @if($postImage)
+            <img src="{{ asset('uploads/' . $postImage) }}" 
+                 alt="Product" class="me-3 rounded" 
+                 style="width: 50px; height: 50px; object-fit: cover;">
+        @else
+            <div class="bg-light me-3 rounded d-flex align-items-center justify-content-center" 
+                 style="width: 50px; height: 50px;">
+                <i class="bi bi-image text-muted"></i>
+            </div>
+        @endif
                                                         <div class="flex-grow-1">
                                                             <h6 class="mb-0">{{ $post->name }}</h6>
                                                             <small class="text-muted">

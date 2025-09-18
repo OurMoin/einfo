@@ -139,7 +139,7 @@
                                                              style="width: 40px; height: 40px; object-fit: cover;">
                                                         <div>
                                                             <h6 class="mb-0">{{ $order->vendor->name }}</h6>
-                                                            <small class="text-muted">@{{ $order->vendor->username }}</small>
+                                                            <small class="text-muted"><i class="bi bi-geo-alt-fill me-2"></i>{{ $order->vendor->area }}</small>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -151,33 +151,39 @@
                                                     <i class="bi bi-box-seam me-2"></i>Order Items ({{ count($order->post_ids) }} products)
                                                 </h6>
                                                 <div class="border rounded p-2">
-                                                    @foreach($order->getOrderedPostsWithDetails() as $post)
-                                                        <div class="d-flex align-items-center mb-2 p-2 bg-white rounded">
-                                                            @if($post->images && count(json_decode($post->images)) > 0)
-                                                                @php $images = json_decode($post->images); @endphp
-                                                                <img src="{{ asset('post-images/' . $images[0]) }}" 
-                                                                     alt="Product" class="me-3 rounded" 
-                                                                     style="width: 50px; height: 50px; object-fit: cover;">
-                                                            @else
-                                                                <div class="bg-light me-3 rounded d-flex align-items-center justify-content-center" 
-                                                                     style="width: 50px; height: 50px;">
-                                                                    <i class="bi bi-image text-muted"></i>
-                                                                </div>
-                                                            @endif
-                                                            <div class="flex-grow-1">
-                                                                <h6 class="mb-0">{{ $post->name }}</h6>
-                                                                <small class="text-muted">
-                                                                    Qty: <strong>{{ $post->ordered_quantity }}</strong> × ৳{{ $post->price }}
-                                                                    @if($post->service_time)
-                                                                        | Service: {{ $post->service_time }}
-                                                                    @endif
-                                                                </small>
-                                                            </div>
-                                                            <div class="text-end">
-                                                                <strong class="text-success">৳{{ $post->price * $post->ordered_quantity }}</strong>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
+                                                   @foreach($order->getOrderedPostsWithDetails() as $post)
+    <div class="d-flex align-items-center p-2 bg-white rounded">
+        @php
+            $images = $post->images ? json_decode($post->images, true) : [];
+            $postImage = $post->image ?? ($images[0] ?? null);
+        @endphp
+
+        @if($postImage)
+            <img src="{{ asset('uploads/' . $postImage) }}" 
+                 alt="Product" class="me-3 rounded" 
+                 style="width: 50px; height: 50px; object-fit: cover;">
+        @else
+            <div class="bg-light me-3 rounded d-flex align-items-center justify-content-center" 
+                 style="width: 50px; height: 50px;">
+                <i class="bi bi-image text-muted"></i>
+            </div>
+        @endif
+
+        <div class="flex-grow-1">
+            <h6 class="mb-0">{{ $post->name }}</h6>
+            <small class="text-muted">
+                Qty: <strong>{{ $post->ordered_quantity }}</strong> × ৳{{ $post->price }}
+                @if($post->service_time)
+                    | Service: {{ $post->service_time }}
+                @endif
+            </small>
+        </div>
+        <div class="text-end">
+            <strong class="text-success">৳{{ $post->price * $post->ordered_quantity }}</strong>
+        </div>
+    </div>
+@endforeach
+
                                                 </div>
                                             </div>
                                         </div>
