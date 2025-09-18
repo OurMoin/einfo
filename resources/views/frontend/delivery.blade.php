@@ -496,11 +496,11 @@ function showNotification(type, message) {
 }
 
 // Auto-refresh page every 30 seconds to check for new orders (skip for completed and cancelled tab)
-setInterval(() => {
-    const activeButton = document.querySelector('.btn-group button.active');
-    if (activeButton && activeButton.textContent.trim() !== 'Completed' && activeButton.textContent.trim() !== 'Cancelled') {
-        location.reload();
-    }
-}, 30000);
+// setInterval(() => {
+//     const activeButton = document.querySelector('.btn-group button.active');
+//     if (activeButton && activeButton.textContent.trim() !== 'Completed' && activeButton.textContent.trim() !== 'Cancelled') {
+//         location.reload();
+//     }
+// }, 30000);
 </script>
 @endsection
