@@ -15,6 +15,103 @@ class OrderController extends Controller
 {
 
 
+
+
+
+
+// OrderController.php এ এই methods add করুন:
+
+// Delivery page দেখানোর জন্য
+public function deliveryPage()
+{
+    // Only confirmed orders দেখাবে delivery personnel কে
+    $orders = Order::where('status', 'confirmed')
+        ->with(['user', 'vendor'])
+        ->latest()
+        ->paginate(10);
+
+    return view('frontend.delivery', compact('orders'));
+}
+
+// Delivery person যখন order accept করবে
+public function acceptForDelivery(Request $request, $id)
+{
+    $order = Order::findOrFail($id);
+    
+    // Check if order is confirmed
+    if ($order->status !== 'confirmed') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only confirmed orders can be accepted for delivery'
+        ], 400);
+    }
+
+    try {
+        // Update order status to processing
+        $order->update([
+            'status' => 'processing',
+            'delivery_person_id' => auth()->id() // optional: যদি track করতে চান কে delivery করছে
+        ]);
+
+        // Send notification to customer
+        $customer = \App\Models\User::find($order->user_id);
+        $deliveryPerson = auth()->user();
+        
+        if ($customer) {
+            $this->sendBrowserNotification(
+                $order->user_id,
+                'Order Being Processed!',
+                "Your order #$order->id has been picked up for delivery and is being processed! 📦",
+                $order->id
+            );
+        }
+
+        // Send notification to vendor
+        $vendor = \App\Models\User::find($order->vendor_id);
+        if ($vendor) {
+            $this->sendBrowserNotification(
+                $order->vendor_id,
+                'Order Picked for Delivery',
+                "Order #$order->id has been accepted by delivery personnel ({$deliveryPerson->name}).",
+                $order->id
+            );
+        }
+
+        \Log::info('Order accepted for delivery', [
+            'order_id' => $order->id,
+            'delivery_person' => auth()->id(),
+            'previous_status' => 'confirmed',
+            'new_status' => 'processing'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order accepted successfully!'
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Failed to accept order for delivery', [
+            'order_id' => $id,
+            'error' => $e->getMessage()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to accept order. Please try again.'
+        ], 500);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 public function updateStatus(Request $request, $id)
 {
     $request->validate([

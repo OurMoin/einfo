@@ -4,15 +4,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'vendor_id',
-        'total_amount',
-        'status',
-        'shipping_address',
-        'phone',
-        'post_ids'
-    ];
+
+     protected $guarded = []; 
+     
+    // protected $fillable = [
+    //     'user_id',
+    //     'vendor_id',
+    //     'total_amount',
+    //     'status',
+    //     'shipping_address',
+    //     'phone',
+    //     'post_ids'
+    // ];
 
     protected $casts = [
         'post_ids' => 'array'

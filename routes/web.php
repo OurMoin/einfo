@@ -10,11 +10,16 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\DeliveryController;
 
-Route::middleware(['auth', 'role:delivery'])->get('/delivery', [DeliveryController::class, 'deliveryIndex'])
-    ->name('delivery.page');
+
     
 Route::middleware(['auth', 'role:admin'])->get('/admin', [DeliveryController::class, 'adminIndex'])
     ->name('admin.page');
+
+// web.php এ add করুন
+Route::middleware(['auth', 'role:delivery'])->group(function () {
+    Route::get('/delivery', [OrderController::class, 'deliveryPage'])->name('delivery.page');
+    Route::post('/orders/{id}/accept-delivery', [OrderController::class, 'acceptForDelivery'])->name('orders.accept-delivery');
+});
 
 Route::get('/send', [LocationController::class, 'sendOtp']);
 Route::post('/verify-otp', [LocationController::class, 'verifyOtp'])->name('verify.otp');
