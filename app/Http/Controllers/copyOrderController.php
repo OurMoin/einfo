@@ -46,7 +46,7 @@ public function acceptForDelivery(Request $request, $id)
     $order = Order::findOrFail($id);
     
     // Check if order is confirmed and not taken by someone else
-    if ($order->status != 'confirmed') {
+    if ($order->status !== 'confirmed') {
         return response()->json([
             'success' => false,
             'message' => 'This order is not available for acceptance'
@@ -123,7 +123,7 @@ public function markAsShipped(Request $request, $id)
     $order = Order::findOrFail($id);
     
     // Only vendor can mark as shipped
-    if ($order->vendor_id != auth()->id()) {
+    if ($order->vendor_id !== auth()->id()) {
         return response()->json([
             'success' => false,
             'message' => 'Unauthorized'
@@ -155,73 +155,64 @@ public function markAsShipped(Request $request, $id)
     ]);
 }
 
+// Complete delivery
 public function completeDelivery(Request $request, $id)
 {
-    try {
-        $order = Order::findOrFail($id);
-        
-        // Debug করার জন্য log করুন
-        \Log::info('Complete Delivery Attempt', [
-            'order_id' => $order->id,
-            'delivery_person_id' => $order->delivery_person_id,
-            'auth_id' => auth()->id(),
-            'auth_user' => auth()->user() ? auth()->user()->id : null,
-        ]);
-        
-        // Check if user is logged in
-        if (!auth()->check()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not authenticated'
-            ], 401);
-        }
-        
-        // Type cast করে compare করুন
-        $deliveryPersonId = $order->delivery_person_id ? (int)$order->delivery_person_id : null;
-        $currentUserId = (int)auth()->id();
-        
-        if ($deliveryPersonId !== $currentUserId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not assigned to this order',
-                'debug' => [
-                    'order_delivery_person' => $deliveryPersonId,
-                    'current_user' => $currentUserId
-                ]
-            ], 403);
-        }
-        
-        if ($order->status !== 'shipped') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only shipped orders can be marked as delivered'
-            ], 400);
-        }
-        
-        $order->update([
-            'status' => 'delivered',
-            
-        ]);
-        
-        // Notifications...
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Order marked as delivered successfully!'
-        ]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Complete Delivery Error', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
+    $order = Order::findOrFail($id);
+    
+    // Only assigned delivery person can complete
+    if ($order->delivery_person_id !== auth()->id()) {
         return response()->json([
             'success' => false,
-            'message' => 'An error occurred: ' . $e->getMessage()
-        ], 500);
+            'message' => 'You are not assigned to this order'
+        ], 403);
     }
+
+    if ($order->status !== 'shipped') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only shipped orders can be marked as delivered'
+        ], 400);
+    }
+
+    $order->update([
+        'status' => 'delivered'
+    ]);
+
+    // Notify customer
+    $customer = \App\Models\User::find($order->user_id);
+    if ($customer) {
+        $this->sendBrowserNotification(
+            $order->user_id,
+            'Order Delivered!',
+            "Your order #$order->id has been successfully delivered! Thank you for shopping with us! ✅",
+            $order->id
+        );
+    }
+
+    // Notify vendor
+    $vendor = \App\Models\User::find($order->vendor_id);
+    if ($vendor) {
+        $this->sendBrowserNotification(
+            $order->vendor_id,
+            'Order Delivered',
+            "Order #$order->id has been successfully delivered to the customer.",
+            $order->id
+        );
+    }
+
+    \Log::info('Order delivered successfully', [
+        'order_id' => $order->id,
+        'delivery_person' => auth()->id(),
+        'delivered_at' => now()
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order marked as delivered successfully!'
+    ]);
 }
+
 
 
 
@@ -238,7 +229,7 @@ public function updateStatus(Request $request, $id)
     $order = Order::findOrFail($id);
     
     // Only vendor can update order status
-    if ($order->vendor_id != auth()->id()) {
+    if ($order->vendor_id !== auth()->id()) {
         abort(403);
     }
 
