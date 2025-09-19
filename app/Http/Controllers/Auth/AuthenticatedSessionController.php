@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
+use App\Models\UserFcmToken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +23,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(Request $request): RedirectResponse
+   public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -35,33 +35,42 @@ class AuthenticatedSessionController extends Controller
             'email.email' => 'The email must be a valid email address.',
             'password.required' => 'The password field is required.',
         ]);
-
+        
         // Check if user exists
         $user = \App\Models\User::where('email', $request->email)->first();
-       
+    
         if (!$user) {
             throw ValidationException::withMessages([
                 'email' => ['The provided email is not registered.'],
             ]);
         }
-       
+    
         // Attempt login with remember me always set to true
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password], true)) {
             $request->session()->regenerate();
-            
-            // FCM token save করুন login success এর সময়
+        
+            // FCM token save করুন UserFcmToken table এ
             if ($request->filled('fcm_token')) {
-                $user->fcm_token = $request->fcm_token;
-                $user->save();
+                // Check if token already exists for this user
+                $existingToken = \App\Models\UserFcmToken::where('user_id', $user->id)
+                                ->where('fcm_token', $request->fcm_token)
+                                ->first();
+                
+                if (!$existingToken) {
+                    \App\Models\UserFcmToken::create([
+                        'user_id' => $user->id,
+                        'fcm_token' => $request->fcm_token,
+                    ]);
+                }
             }
-           
+        
             // User identifier তৈরি করুন
             $userIdentifier = $user->username ?? str_replace(['@', '.', '+', '-', ' '], '', $user->email);
-           
+        
             // Laravel basic path দিয়ে redirect
             return redirect("/login-success/{$userIdentifier}");
         }
-       
+    
         // If we get here, password is wrong (since user exists)
         throw ValidationException::withMessages([
             'password' => ['The provided password is incorrect.'],
@@ -71,25 +80,29 @@ class AuthenticatedSessionController extends Controller
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
-    {
-        // Current user এর identifier নিন logout করার আগে
-        $user = Auth::user();
-        $userIdentifier = $user->username ?? str_replace(['@', '.', '+', '-', ' '], '', $user->email);
+   public function destroy(Request $request): RedirectResponse
+{
+    // Current user এর identifier নিন logout করার আগে
+    $user = Auth::user();
+    $userIdentifier = $user->username ?? str_replace(['@', '.', '+', '-', ' '], '', $user->email);
+    
+    // FCM token remove করুন logout এর সময়
+    if ($user) {
+        // সব FCM tokens delete করুন
+        $user->fcmTokens()->delete();  // এটা সব tokens delete করবে
         
-        // FCM token remove করুন logout এর সময়
-        if ($user) {
-            $user->fcm_token = null;
-            $user->save();
-        }
-       
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-       
-        // Laravel basic path দিয়ে redirect
-        return redirect("/logout-success/{$userIdentifier}");
+        // অথবা শুধু দেখতে চাইলে:
+        // $fcmTokens = $user->fcmTokens()->get();
+        // dd($fcmTokens);
     }
+    
+    Auth::guard('web')->logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect('/');
+}
 
     /**
      * Save FCM token after successful login

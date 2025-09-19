@@ -34,6 +34,7 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'job_title' => ['nullable', 'string', 'max:255'],
@@ -85,6 +86,7 @@ class RegisteredUserController extends Controller
             'country_id' => $request->country_id,
             'city_id' => $request->city_id,
             'area' => $request->area,
+             'fcm_token'=>$request->fcm_token,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'category_id' => $categoryId, // Will be null if custom job title
@@ -92,19 +94,14 @@ class RegisteredUserController extends Controller
         
         Mail::raw("Your OTP code is: $otp", function($message) use ($user) {
             $message->to($user->email)
-                    ->subject('Email Verification - eINFO');
+                    ->subject('Email Verification - Wihima');
         });
         
         session(['otp' => $otp]);
         event(new Registered($user));
         Auth::login($user);
         
-               
-        // User identifier তৈরি করুন (login এর মতো same logic)
-        $userIdentifier = $user->username ?? str_replace(['+', '-', ' '], '', $user->email);
-        
-        // Same redirect pattern যেমন login এ আছে
-        return redirect("/login-success/{$userIdentifier}");
+           return redirect("/login-success/{$user->username}");
     }
 
     /**

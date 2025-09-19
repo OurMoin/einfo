@@ -79,7 +79,6 @@
                             @enderror
                         </div>
                         <input type="hidden" name="fcm_token" id="fcm_token_field" value="">
-                        
                         <div class="d-flex justify-content-between align-items-center">
                             <a href="{{ route('login') }}" class="text-decoration-underline">Already registered?</a>
                             <button type="submit" class="btn btn-primary">Register</button>

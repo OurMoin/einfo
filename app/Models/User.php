@@ -53,6 +53,12 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id')
                     ->withTimestamps();
     }
+    
+    public function fcmTokens()
+    {
+        return $this->hasMany(UserFcmToken::class);
+    }
+
 
 
     
