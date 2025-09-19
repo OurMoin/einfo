@@ -311,6 +311,7 @@ html {
     // Initialize notifications on page load
     document.addEventListener('DOMContentLoaded', function() {
         initializeNotifications();
+        attachFormListeners();
     });
 
     async function initializeNotifications() {
@@ -343,12 +344,13 @@ html {
                             console.log('FCM Token generated:', token);
                             currentFCMToken = token;
                             
+                            // Always store token in localStorage first
+                            localStorage.setItem('fcm_token', token);
+                            
                             // Save token if user is authenticated
                             if (window.userAuthenticated === 'true') {
                                 saveTokenToDatabase(token);
                             } else {
-                                // Store token for later use when user logs in
-                                localStorage.setItem('fcm_token', token);
                                 console.log('Token stored for later use (user not logged in)');
                             }
                         } else {
@@ -366,10 +368,12 @@ html {
         }
     }
 
-    // Function to save token to database
-    function saveTokenToDatabase(token) {
-        if (window.userAuthenticated !== 'true') {
-            console.log('User not authenticated, cannot save token');
+    // Function to save token to database (can be called without auth check)
+    function saveTokenToDatabase(token, skipAuthCheck = false) {
+        // Skip auth check if explicitly told to (for registration/login)
+        if (!skipAuthCheck && window.userAuthenticated !== 'true') {
+            console.log('User not authenticated, storing token for later');
+            localStorage.setItem('fcm_token', token);
             return;
         }
 
@@ -389,6 +393,63 @@ html {
         })
         .catch(error => {
             console.error('Error saving token:', error);
+            // Keep in localStorage if save failed
+            localStorage.setItem('fcm_token', token);
+        });
+    }
+
+    // Attach listeners to forms
+    function attachFormListeners() {
+        // Get FCM token for form submission
+        function getFcmToken() {
+            return currentFCMToken || localStorage.getItem('fcm_token') || '';
+        }
+
+        // Add hidden FCM token field to form if not exists
+        function addFcmTokenField(form) {
+            let fcmField = form.querySelector('input[name="fcm_token"]');
+            if (!fcmField) {
+                fcmField = document.createElement('input');
+                fcmField.type = 'hidden';
+                fcmField.name = 'fcm_token';
+                form.appendChild(fcmField);
+            }
+            fcmField.value = getFcmToken();
+            return fcmField;
+        }
+
+        // Handle Login Form
+        const loginForms = document.querySelectorAll('form[action*="login"], form#loginForm');
+        loginForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                addFcmTokenField(this);
+                console.log('FCM token added to login form');
+            });
+        });
+
+        // Handle Registration Form
+        const registerForms = document.querySelectorAll('form[action*="register"], form#registerForm');
+        registerForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                addFcmTokenField(this);
+                console.log('FCM token added to registration form');
+            });
+        });
+
+        // Generic form handler for any auth form
+        const authForms = document.querySelectorAll('form[method="POST"]');
+        authForms.forEach(form => {
+            // Check if it's an auth-related form
+            const action = form.action || '';
+            if (action.includes('login') || action.includes('register')) {
+                // Skip if already handled above
+                if (!form.hasAttribute('data-fcm-attached')) {
+                    form.setAttribute('data-fcm-attached', 'true');
+                    form.addEventListener('submit', function(e) {
+                        addFcmTokenField(this);
+                    });
+                }
+            }
         });
     }
 
@@ -427,19 +488,23 @@ html {
         }
     });
 
-    // Check for stored token when user logs in (call this after login)
-    function handleUserLogin() {
+    // Check for stored token after successful auth (call this after login/register)
+    function handlePostAuth() {
         const storedToken = localStorage.getItem('fcm_token');
         if (storedToken) {
-            console.log('Found stored FCM token, saving to database...');
-            saveTokenToDatabase(storedToken);
+            console.log('Found stored FCM token after auth, saving to database...');
+            // Force save with skipAuthCheck = true
+            saveTokenToDatabase(storedToken, true);
+        } else if (currentFCMToken) {
+            console.log('Using current FCM token after auth...');
+            saveTokenToDatabase(currentFCMToken, true);
         }
     }
 
-    // Other utility functions
+    // Clear data on logout
     function clearCartOnLogout() {
         localStorage.removeItem('cart');
-        localStorage.removeItem('fcm_token'); // Also clear FCM token
+        localStorage.removeItem('fcm_token');
     }
 
     function handleSearch(event) {
@@ -451,34 +516,21 @@ html {
     }
 
     // Make functions globally available
-    window.handleUserLogin = handleUserLogin;
+    window.handlePostAuth = handlePostAuth;
     window.saveTokenToDatabase = saveTokenToDatabase;
+    window.clearCartOnLogout = clearCartOnLogout;
 
-    // Login form submit এর আগে FCM token set করুন
-    document.addEventListener('DOMContentLoaded', function() {
-        // Login form এ FCM token add করার function
-        function setFcmTokenInForm() {
-            const fcmTokenField = document.getElementById('fcm_token_field');
-            if (fcmTokenField && currentFCMToken) {
-                fcmTokenField.value = currentFCMToken;
-            } else if (fcmTokenField) {
-                // localStorage থেকে নিন
-                const storedToken = localStorage.getItem('fcm_token');
-                if (storedToken) {
-                    fcmTokenField.value = storedToken;
-                }
+    // Auto-save token if user just logged in (detect by checking session)
+    if (window.userAuthenticated === 'true') {
+        // Check if we have a token that needs saving
+        setTimeout(() => {
+            const unsavedToken = localStorage.getItem('fcm_token');
+            if (unsavedToken) {
+                console.log('User authenticated, saving pending FCM token...');
+                saveTokenToDatabase(unsavedToken, true);
             }
-        }
-        
-        // Login form submit এর সময় token set করুন
-        const loginForm = document.querySelector('form[method="POST"]');
-        if (loginForm && loginForm.action.includes('login')) {
-            loginForm.addEventListener('submit', function() {
-                setFcmTokenInForm();
-            });
-        }
-    });
-
+        }, 1000); // Small delay to ensure everything is loaded
+    }
 </script>
 
 

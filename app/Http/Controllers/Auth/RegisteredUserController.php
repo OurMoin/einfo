@@ -92,14 +92,19 @@ class RegisteredUserController extends Controller
         
         Mail::raw("Your OTP code is: $otp", function($message) use ($user) {
             $message->to($user->email)
-                    ->subject('Email Verification - Wihima');
+                    ->subject('Email Verification - eINFO');
         });
         
         session(['otp' => $otp]);
         event(new Registered($user));
         Auth::login($user);
         
-        return redirect(route('dashboard', absolute: false));
+               
+        // User identifier তৈরি করুন (login এর মতো same logic)
+        $userIdentifier = $user->username ?? str_replace(['+', '-', ' '], '', $user->email);
+        
+        // Same redirect pattern যেমন login এ আছে
+        return redirect("/login-success/{$userIdentifier}");
     }
 
     /**
