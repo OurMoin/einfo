@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\SmsService;
+use App\Models\User;
 
 class SmsController extends Controller
 {
@@ -26,6 +27,8 @@ class SmsController extends Controller
 
      public function registerToken(Request $request)
     {
+       
+
         $user = User::where('username', $request->user_id)->first();
 
         if (!$user) {
@@ -35,7 +38,7 @@ class SmsController extends Controller
             ], 404);
         }
 
-        $user->fcm_token = $request->fcm_token;
+        $user->fcm_token = $request->firebase_token;
         $user->save();
 
         return response()->json([
