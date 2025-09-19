@@ -117,6 +117,17 @@ html {
     scroll-behavior: smooth;
 }
 
+/* সব input, textarea, select, button এর default style remove */
+input {
+    all: unset;       /* সব browser default property remove করে */
+    box-sizing: border-box; /* padding এবং border consistent করতে */
+}
+
+/* Optional: focus outline disable করতে চাইলে */
+input:focus {
+    outline: none;
+}
+
 
    </style>
    
@@ -132,7 +143,7 @@ html {
     <div class="container-fluid d-flex align-items-center">
         <!-- Left: Logo -->
         <a class="navbar-brand" href="/">
-            <img src="https://einfo.site/logo.png"
+            <img src="{{ asset('logo.png') }}"
                  class="rounded-circle"
                  alt="User"
                  style="width:32px; height:32px; object-fit:cover;">
