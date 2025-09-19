@@ -35,7 +35,7 @@ class SmsController extends Controller
             ], 404);
         }
 
-        $user->firebase_token = $request->firebase_token;
+        $user->fcm_token = $request->fcm_token;
         $user->save();
 
         return response()->json([
