@@ -23,4 +23,24 @@ class SmsController extends Controller
 
         return back()->with('status', 'SMS Sent! Response: ' . json_encode($response));
     }
+
+     public function registerToken(Request $request)
+    {
+        $user = User::where('username', $request->user_id)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $user->firebase_token = $request->firebase_token;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Token saved successfully'
+        ]);
+    }
 }
