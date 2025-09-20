@@ -78,7 +78,7 @@
                         data-index="{{ $index }}">
                         <a href="#{{ $category->slug }}" class="text-decoration-none">                  
                             <div class="mx-auto mb-2" style="width: 80px; height: 80px; overflow: hidden;">
-                                <img src="{{ $category->image ?? asset('profile-image/no-image.jpeg') }}" 
+                                <img src="{{ $category->image ? asset('icon/' . $category->image) : asset('profile-image/no-image.jpeg') }}"
                                     alt="{{ $category->category_name }}" 
                                     style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
@@ -178,7 +178,7 @@
                             data-prod-index="{{ $prodIndex }}">
                             <a href="{{ route('products.category', $productCat->slug) }}" class="text-decoration-none">
                                 <div class="mx-auto mb-2" style="width: 80px; height: 80px; overflow: hidden;">
-                                    <img src="{{ $productCat->image ?? asset('profile-image/no-image.jpeg') }}"
+                                    <img src="{{ $productCat->image ? asset('icon/' . $productCat->image) : asset('profile-image/no-image.jpeg') }}"
                                         alt="{{ $productCat->category_name }}"
                                         style="width: 100%; height: 100%; object-fit: cover;">
                                 </div>

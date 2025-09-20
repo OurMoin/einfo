@@ -14,7 +14,7 @@ class DeliveryController extends Controller
 {
     $users = User::with(['country', 'city', 'category'])
                 ->latest() // This will order by created_at DESC (newest first)
-                ->paginate(5);
+                ->paginate(10);
     return view('frontend.admin', compact('users'));
 }
 }
