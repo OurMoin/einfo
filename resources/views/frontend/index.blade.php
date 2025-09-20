@@ -192,8 +192,14 @@
                         @if($prodNeedSeeMoreSm && $prodIndex == $prodSeeMorePositionSm)
                             <div class="col-4 col-sm-4 d-lg-none text-center mb-3 prod-toggle-btn-sm-{{ $sectionId }}" id="prodToggleBtnSm{{ $sectionId }}">
                                 <a href="javascript:void(0);" class="text-decoration-none" onclick="toggleProductCategoriesSm('{{ $sectionId }}', {{ $prodSeeMorePositionSm }})">
-                                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: #f5f5f5; border-radius: 8px; cursor: pointer;">
-                                        <span style="font-size: 14px; color: #888;" id="prodToggleTextSm{{ $sectionId }}">See More</span>
+                                    <div class="mx-auto mb-2 align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f5f5f5; border-radius: 8px; cursor: pointer;">
+                                    <img src="{{asset('icon/swipe-down.gif') }}"
+                                        alt="{{ $productCat->category_name }}"
+                                        style="width: 100%; height: 100%; object-fit: cover;">
+                                        
+                                    </div>
+                                    <div>
+                                        <span style="display: block; font-size: 14px; color: #888;" id="prodToggleTextSm{{ $sectionId }}">See More</span>                                
                                     </div>
                                 </a>
                             </div>
@@ -203,8 +209,14 @@
                         @if($prodNeedSeeMoreLg && $prodIndex == $prodSeeMorePositionLg)
                             <div class="d-none d-lg-block col-lg-3 text-center mb-3 prod-toggle-btn-lg-{{ $sectionId }}" id="prodToggleBtnLg{{ $sectionId }}">
                                 <a href="javascript:void(0);" class="text-decoration-none" onclick="toggleProductCategoriesLg('{{ $sectionId }}', {{ $prodSeeMorePositionLg }})">
-                                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: #f5f5f5; border-radius: 8px; cursor: pointer;">
-                                        <span style="font-size: 14px; color: #888;" id="prodToggleTextLg{{ $sectionId }}">See More</span>
+                                    <div class="mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #f5f5f5; border-radius: 8px; cursor: pointer;">
+                                    <img src="{{asset('icon/swipe-down.gif') }}"
+                                        alt="{{ $productCat->category_name }}"
+                                        style="width: 100%; height: 100%; object-fit: cover;">
+                                        
+                                    </div>
+                                    <div>
+                                    <span style="display: block; font-size: 14px; color: #888;" id="prodToggleTextLg{{ $sectionId }}">See More</span>
                                     </div>
                                 </a>
                             </div>
