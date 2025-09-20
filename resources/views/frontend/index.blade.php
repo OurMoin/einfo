@@ -177,7 +177,7 @@
                             @if($prodHiddenOnLg) product-hidden-lg-{{ $sectionId }} @endif"
                             data-prod-index="{{ $prodIndex }}">
                             <a href="{{ route('products.category', $productCat->slug) }}" class="text-decoration-none">
-                                <div class="mx-auto mb-2" style="width: 80px; height: 80px; overflow: hidden;">
+                                <div class="mx-auto mb-2" style="width: 50px; height: 50px; overflow: hidden;">
                                     <img src="{{ $productCat->image ? asset('icon/' . $productCat->image) : asset('profile-image/no-image.jpeg') }}"
                                         alt="{{ $productCat->category_name }}"
                                         style="width: 100%; height: 100%; object-fit: cover;">
