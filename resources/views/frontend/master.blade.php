@@ -117,15 +117,52 @@ html {
     scroll-behavior: smooth;
 }
 
-/* সব input, textarea, select, button এর default style remove */
+ /* Force dropdown to open on left side */
+ .navbar .dropdown-menu {
+            right: 0 !important;
+            left: auto !important;
+            transform: none !important;
+        }
+
 input {
-    all: unset;       /* সব browser default property remove করে */
-    box-sizing: border-box; /* padding এবং border consistent করতে */
+    outline: none !important;
+    box-shadow: none !important;
 }
 
-/* Optional: focus outline disable করতে চাইলে */
 input:focus {
-    outline: none;
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: inherit !important;
+}
+
+/* Browser er default clear button hide করার জন্য */
+input::-webkit-search-cancel-button,
+input::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Firefox er clear button hide */
+input::-moz-search-cancel-button {
+    display: none;
+}
+
+/* IE/Edge er clear button hide */
+input::-ms-clear {
+    display: none;
+}
+
+        .navbar {
+  --bs-navbar-padding-x: 0;
+  --bs-navbar-padding-y: 0 !important;}
+
+  .navbar-expand-lg .navbar-nav .nav-link {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .navbar-brand {
+  margin-right: 0;
 }
 
 
