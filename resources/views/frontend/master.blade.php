@@ -291,6 +291,32 @@ input:focus {
 @yield('main-content')
 @include('frontend.cart')
 
+<footer class="py-4 mt-5 border-top">
+    <div class="container text-center">
+        <ul class="list-inline mb-2">
+            <li class="list-inline-item">
+                <a href="{{ url('/about-us') }}" class="text-muted text-decoration-none">
+                    About
+                </a>
+            </li>
+            <li class="list-inline-item">.</li>
+            <li class="list-inline-item">
+                <a href="{{ url('/privacy-policy') }}" class="text-muted text-decoration-none">
+                    Privacy
+                </a>
+            </li>
+            <li class="list-inline-item">.</li>
+            <li class="list-inline-item">
+                <a href="{{ url('/terms-and-condition') }}" class="text-muted text-decoration-none">
+                    Terms
+                </a>
+            </li>
+        </ul>
+        <p class="mb-0 text-muted">eINFO &copy; {{ date('Y') }}</p>
+    </div>
+</footer>
+
+
 <script>
     // Global variables
     window.userAuthenticated = {{ auth()->check() ? 'true' : 'false' }};

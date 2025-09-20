@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\DeliveryController;
 
+Route::view('/privacy-policy', 'footerpage.privacy-policy');
+Route::view('/about-us', 'footerpage.about-us');
+Route::view('/terms-and-condition', 'footerpage.terms-and-condition');
 
     
 Route::middleware(['auth', 'role:admin'])->get('/admin', [DeliveryController::class, 'adminIndex'])
